@@ -62,6 +62,8 @@ class _SettingsPageState extends State<SettingsPage> {
           );
           if (defaultValue != null) {
             _editDialogTextController.text = defaultValue;
+          } else {
+            _editDialogTextController.text = '';
           }
           return dialog;
         });
@@ -86,7 +88,12 @@ class _SettingsPageState extends State<SettingsPage> {
                 ListTile(
                   title: Text(_settings[SettingsType.apiClientId].toString()),
                   subtitle: const Text("client_id"),
-                  trailing: IconButton(
+                  trailing: TextButton(
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size.square(4),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
                     onPressed: () async {
                       String? newClientId = await showEditDialog(
                           'Edit client id',
@@ -97,15 +104,20 @@ class _SettingsPageState extends State<SettingsPage> {
                             SettingsType.apiClientId, newClientId.trim());
                       }
                       widget.backendController.openApiClient();
-                      setState(() {});
+                      _refreshIndicatorKey.currentState?.show();
                     },
-                    icon: const Icon(Icons.edit),
+                    child: const Text("Edit"),
                   ),
                 ),
                 ListTile(
                   title: Text(_settings[SettingsType.apiSecret].toString()),
                   subtitle: const Text("secret"),
-                  trailing: IconButton(
+                  trailing: TextButton(
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size.square(4),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
                     onPressed: () async {
                       String? newSecret = await showEditDialog('Edit secret',
                           'secret', _settings[SettingsType.apiSecret]);
@@ -114,9 +126,9 @@ class _SettingsPageState extends State<SettingsPage> {
                             SettingsType.apiSecret, newSecret.trim());
                       }
                       widget.backendController.openApiClient();
-                      setState(() {});
+                      _refreshIndicatorKey.currentState?.show();
                     },
-                    icon: const Icon(Icons.edit),
+                    child: const Text("Edit"),
                   ),
                 )
               ],
@@ -140,13 +152,13 @@ class _SettingsPageState extends State<SettingsPage> {
                             await widget.backendController
                                 .addNewAccessToken(newAccessToken.trim());
                           }
-                          setState(() {});
+                          _refreshIndicatorKey.currentState?.show();
                         },
                         child: const Text('Add')),
                     TextButton(
                         onPressed: () async {
                           await widget.backendController.clearAccessTokens();
-                          setState(() {});
+                          _refreshIndicatorKey.currentState?.show();
                         },
                         child: const Text('Clear'))
                   ],

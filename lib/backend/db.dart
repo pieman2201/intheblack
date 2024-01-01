@@ -17,12 +17,12 @@ class DbClient {
       $transactionsColumnAmount real not null,
       $transactionsColumnDate int not null,
       $transactionsColumnName text not null,
-      $transactionsColumnMerchantName text not null,
+      $transactionsColumnMerchantName text,
       $transactionsColumnPending integer not null,
-      $transactionsColumnPendingTransactionId text not null,
+      $transactionsColumnPendingTransactionId text,
       $transactionsColumnTransactionId text not null,
-      $transactionsColumnLogoUrl text not null,
-      $transactionsColumnAuthorizedDate int not null,
+      $transactionsColumnLogoUrl text,
+      $transactionsColumnAuthorizedDate int,
       $transactionsColumnPrimaryCategory text not null,
       $transactionsColumnDetailedCategory text not null,
       $transactionsColumnCategoryIconUrl text not null)''');
@@ -109,14 +109,14 @@ class DbClient {
 
   Future<Iterable<SurfacedTransaction>> getSurfacedTransactionsInDateRange(
       DateTime startDate, DateTime endDate) async {
-    num startMillis = startDate.millisecondsSinceEpoch;
-    num endMillis = endDate.millisecondsSinceEpoch;
+    num startInt = Transaction.dateToNum(startDate);
+    num endInt = Transaction.dateToNum(endDate);
 
     List<Map<String, dynamic>> maps = await db.rawQuery('''
     select * from $tableSurfacedTransactions
     inner join $tableTransactions
     on $tableSurfacedTransactions.$surfacedTransactionsColumnRealTransactionId=$tableTransactions.$transactionsColumnTransactionId
-    where $transactionsColumnDate >= $startMillis and $transactionsColumnDate <= $endMillis
+    where $transactionsColumnDate >= $startInt and $transactionsColumnDate <= $endInt
     ''');
 
     Iterable<SurfacedTransaction> surfacedTransactions = maps.map(

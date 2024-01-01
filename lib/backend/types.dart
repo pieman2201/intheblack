@@ -22,28 +22,40 @@ class Transaction {
   num amount;
   DateTime date;
   String name;
-  String merchantName;
+  String? merchantName;
   bool pending;
-  String pendingTransactionId;
+  String? pendingTransactionId;
   String transactionId;
-  String logoUrl;
-  DateTime authorizedDate;
+  String? logoUrl;
+  DateTime? authorizedDate;
   String primaryCategory;
   String detailedCategory;
   String categoryIconUrl;
+
+  static num dateToNum(DateTime date) {
+    return date.year * 10000 + date.month * 100 + date.day;
+  }
+
+  static DateTime numToDate(num n) {
+    int year = n ~/ 10000;
+    int month = (n - (year * 10000)) ~/ 100;
+    int day = (n % 100) as int;
+    return DateTime(year, month, day);
+  }
 
   Map<String, dynamic> toMap() {
     var map = <String, dynamic>{
       transactionsColumnId: id,
       transactionsColumnAmount: amount,
-      transactionsColumnDate: date.millisecondsSinceEpoch,
+      transactionsColumnDate: dateToNum(date),
       transactionsColumnName: name,
       transactionsColumnMerchantName: merchantName,
       transactionsColumnPending: pending ? 1 : 0,
       transactionsColumnPendingTransactionId: pendingTransactionId,
       transactionsColumnTransactionId: transactionId,
       transactionsColumnLogoUrl: logoUrl,
-      transactionsColumnAuthorizedDate: authorizedDate.millisecondsSinceEpoch,
+      transactionsColumnAuthorizedDate:
+          authorizedDate == null ? null : dateToNum(authorizedDate!),
       transactionsColumnPrimaryCategory: primaryCategory,
       transactionsColumnDetailedCategory: detailedCategory,
       transactionsColumnCategoryIconUrl: categoryIconUrl,
@@ -76,16 +88,16 @@ class Transaction {
   Transaction.fromMap(Map<String, dynamic> map)
       : id = map[transactionsColumnId]!,
         amount = map[transactionsColumnAmount]!,
-        date =
-            DateTime.fromMillisecondsSinceEpoch(map[transactionsColumnDate]!),
+        date = numToDate(map[transactionsColumnDate]!),
         name = map[transactionsColumnName]!,
-        merchantName = map[transactionsColumnMerchantName]!,
+        merchantName = map[transactionsColumnMerchantName],
         pending = map[transactionsColumnPending]! == 1,
-        pendingTransactionId = map[transactionsColumnPendingTransactionId]!,
+        pendingTransactionId = map[transactionsColumnPendingTransactionId],
         transactionId = map[transactionsColumnTransactionId]!,
-        logoUrl = map[transactionsColumnLogoUrl]!,
-        authorizedDate = DateTime.fromMillisecondsSinceEpoch(
-            map[transactionsColumnAuthorizedDate]!),
+        logoUrl = map[transactionsColumnLogoUrl],
+        authorizedDate = map[transactionsColumnAuthorizedDate] == null
+            ? null
+            : numToDate(map[transactionsColumnAuthorizedDate]!),
         primaryCategory = map[transactionsColumnPrimaryCategory]!,
         detailedCategory = map[transactionsColumnDetailedCategory]!,
         categoryIconUrl = map[transactionsColumnCategoryIconUrl]!;
@@ -115,16 +127,15 @@ class Transaction {
             date: DateTime.parse(date),
             name: name,
             pending: pending,
-            pendingTransactionId: pendingTransactionId.toString(),
+            pendingTransactionId: pendingTransactionId,
             transactionId: transactionId,
-            authorizedDate: authorizedDate != null
-                ? DateTime.parse(authorizedDate)
-                : DateTime.parse(date),
+            authorizedDate:
+                authorizedDate != null ? DateTime.parse(authorizedDate) : null,
             primaryCategory: primaryCategory,
             detailedCategory: detailedCategory,
             categoryIconUrl: categoryIconUrl,
-            logoUrl: logoUrl.toString(),
-            merchantName: merchantName.toString(),
+            logoUrl: logoUrl,
+            merchantName: merchantName,
           );
           if (logoUrl == null || merchantName == null) {
             // Attempt to source from counterparty if missing in main body

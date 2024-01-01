@@ -4,6 +4,8 @@ import 'package:pfm/backend/controller.dart';
 import 'package:pfm/settings/page.dart';
 import 'package:pfm/spending/page.dart';
 
+final BackendController _backendController = BackendController();
+
 void main() {
   runApp(MyApp());
 }
@@ -15,9 +17,25 @@ class DestinationPage {
   DestinationPage({required this.page, required this.navigationIcon});
 }
 
-class MyApp extends StatelessWidget {
-  final BackendController _backendController = BackendController();
+class BackendDestinationPage extends DestinationPage {
+  BackendDestinationPage({required Widget page, required super.navigationIcon})
+      : super(
+            page: FutureBuilder(
+          future: () async {
+            await _backendController.open();
+            return 0;
+          }(),
+          builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
+            // Don't show anything until the controller is initialized
+            if (snapshot.hasData) {
+              return page;
+            }
+            return const SizedBox.shrink();
+          },
+        ));
+}
 
+class MyApp extends StatelessWidget {
   MyApp({super.key});
 
   // This widget is the root of your application.
@@ -35,41 +53,17 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
         ),
         home: BottomNavigationPage(destinationPages: [
-          DestinationPage(
-            page: FutureBuilder(
-              future: () async {
-                await _backendController.open();
-                return 0;
-              }(),
-              builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
-                // Don't show anything until the controller is initialized
-                if (snapshot.hasData) {
-                  return SpendingPage(backendController: _backendController);
-                }
-                return const SizedBox.shrink();
-              },
-            ),
+          BackendDestinationPage(
+            page: SpendingPage(backendController: _backendController),
             navigationIcon: const NavigationDestination(
-                icon: Icon(Icons.monetization_on_outlined), label: 'Spending'),
+                icon: Icon(Icons.local_atm), label: 'Spending'),
           ),
           DestinationPage(
               page: Container(),
               navigationIcon: const NavigationDestination(
                   icon: Icon(Icons.search), label: 'Transactions')),
-          DestinationPage(
-            page: FutureBuilder(
-              future: () async {
-                await _backendController.open();
-                return 0;
-              }(),
-              builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
-                // Don't show anything until the controller is initialized
-                if (snapshot.hasData) {
-                  return SettingsPage(backendController: _backendController);
-                }
-                return const SizedBox.shrink();
-              },
-            ),
+          BackendDestinationPage(
+            page: SettingsPage(backendController: _backendController),
             navigationIcon: const NavigationDestination(
                 icon: Icon(Icons.settings), label: 'Settings'),
           )

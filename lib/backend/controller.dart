@@ -25,9 +25,7 @@ class BackendController {
         id: -1,
         realTransaction: transaction,
         percentOfRealAmount: 100,
-        name: transaction.merchantName == null.toString()
-            ? transaction.name
-            : transaction.merchantName));
+        name: transaction.merchantName ?? transaction.name));
   }
 
   Future syncTransactionsAndStore() async {
