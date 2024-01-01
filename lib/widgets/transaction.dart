@@ -9,15 +9,11 @@ class TransactionListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Image categoryImage = Image.network(
-      transaction.realTransaction.categoryIconUrl,
-      color: Theme.of(context).colorScheme.background,
-      colorBlendMode: BlendMode.softLight,
-    );
-
     return ListTile(
       leading: CircleAvatar(
-        child: categoryImage,
+        child: Icon(transaction.budget != null
+            ? IconData(transaction.budget!.icon, fontFamily: 'MaterialIcons')
+            : Icons.question_mark),
       ),
       title: Text(
         transaction.name,

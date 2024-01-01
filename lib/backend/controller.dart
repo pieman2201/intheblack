@@ -24,6 +24,7 @@ class BackendController {
     await dbClient.insertSurfacedTransaction(SurfacedTransaction(
         id: -1,
         realTransaction: transaction,
+        budget: null,
         percentOfRealAmount: 100,
         name: transaction.merchantName ?? transaction.name));
   }
@@ -100,5 +101,37 @@ class BackendController {
       SettingsType settingsType, String value) async {
     await dbClient.updateSetting(settingsType, value);
     return getSettings();
+  }
+
+  Future<Budget> upsertBudget(Budget budget) async {
+    Budget? existingBudget = await dbClient.getBudgetById(budget.id);
+    if (existingBudget == null) {
+      // Insert
+      return await dbClient.insertBudget(budget);
+    } else {
+      // Update
+      return await dbClient.updateBudget(budget);
+    }
+  }
+
+  Future<Iterable<Budget>> getBudgets() async {
+    return await dbClient.getBudgets();
+  }
+
+  Future deleteBudget(Budget budget) async {
+    // Remove budget from all surfaced transactions in the budget to be deleted
+    Iterable<SurfacedTransaction> allBudgetTransactions =
+        await dbClient.getSurfacedTransactionsInBudgetInDateRange(
+            budget,
+            DateTime.fromMillisecondsSinceEpoch(0),
+            DateTime.now().add(const Duration(days: 1)));
+
+    for (SurfacedTransaction budgetTransaction in allBudgetTransactions) {
+      budgetTransaction.budget = null;
+      await dbClient.updateSurfacedTransaction(budgetTransaction);
+    }
+
+    // Remove budget itself
+    await dbClient.deleteBudget(budget);
   }
 }

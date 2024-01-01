@@ -10,7 +10,7 @@ class SpendChart extends StatelessWidget {
 
   final Map<DateTime, num> runningSpendSum = <DateTime, num>{};
   final List<FlSpot> spendLineSpots = [];
-  late final List<FlSpot> projectedLineSpots;
+  late final List<FlSpot> projectedLineSpots = [];
 
   SpendChart(
       {super.key,
@@ -27,20 +27,26 @@ class SpendChart extends StatelessWidget {
     }
     var dateKeys = runningSpendSum.keys.toList();
     dateKeys.sort((a, b) => a.compareTo(b));
+    spendLineSpots.add(const FlSpot(0, 0));
     for (DateTime dateKey in dateKeys) {
       spendLineSpots.add(
           FlSpot(dateKey.day.toDouble(), runningSpendSum[dateKey]!.toDouble()));
     }
-    spendLineSpots.add(
-        FlSpot(DateTime.now().day.toDouble(), runningSpendTotal.toDouble()));
-    num dailySpendRate = runningSpendTotal / (dateKeys.last.day.toDouble() - 1);
-    projectedLineSpots = [
-      FlSpot(DateTime.now().day.toDouble(), runningSpendTotal.toDouble()),
-      FlSpot(
-          endDate.day.toDouble(),
-          runningSpendTotal.toDouble() +
-              (dailySpendRate * (endDate.day - DateTime.now().day))),
-    ];
+    if (DateTime.now().isBefore(endDate)) {
+      spendLineSpots.add(
+          FlSpot(DateTime.now().day.toDouble(), runningSpendTotal.toDouble()));
+      num dailySpendRate =
+          runningSpendTotal / (dateKeys.last.day.toDouble() - 1);
+      projectedLineSpots.addAll([
+        FlSpot(DateTime.now().day.toDouble(), runningSpendTotal.toDouble()),
+        FlSpot(
+            endDate.day.toDouble(),
+            runningSpendTotal.toDouble() +
+                (dailySpendRate * (endDate.day - DateTime.now().day))),
+      ]);
+    } else {
+      spendLineSpots.add(FlSpot(endDate.day.toDouble(), runningSpendTotal.toDouble()));
+    }
   }
 
   @override

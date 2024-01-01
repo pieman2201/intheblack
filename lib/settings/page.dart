@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pfm/backend/controller.dart';
 import 'package:pfm/backend/types.dart';
+import 'package:pfm/budget/page.dart';
+import 'package:pfm/widgets/budget.dart';
 
 class SettingsPage extends StatefulWidget {
   final BackendController backendController;
@@ -16,6 +18,8 @@ class _SettingsPageState extends State<SettingsPage> {
       GlobalKey<RefreshIndicatorState>();
 
   Map<String, String> _accessTokenCursors = <String, String>{};
+  Iterable<Budget> _budgets = [];
+
   late TextEditingController _editDialogTextController;
 
   Map<SettingsType, String> _settings = <SettingsType, String>{};
@@ -77,74 +81,73 @@ class _SettingsPageState extends State<SettingsPage> {
         _accessTokenCursors =
             await widget.backendController.getAccessTokenCursors();
         _settings = await widget.backendController.getSettings();
+        _budgets = await widget.backendController.getBudgets();
         setState(() {});
       },
-      child: ListView(
-        //padding: EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Column(
-              children: [
-                ListTile(
-                  title: Text(_settings[SettingsType.apiClientId].toString()),
-                  subtitle: const Text("client_id"),
-                  trailing: TextButton(
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size.square(4),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    onPressed: () async {
-                      String? newClientId = await showEditDialog(
-                          'Edit client id',
-                          'client_id',
-                          _settings[SettingsType.apiClientId]);
-                      if (newClientId != null) {
-                        await widget.backendController.changeSetting(
-                            SettingsType.apiClientId, newClientId.trim());
-                      }
-                      widget.backendController.openApiClient();
-                      _refreshIndicatorKey.currentState?.show();
-                    },
-                    child: const Text("Edit"),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+            textButtonTheme: TextButtonThemeData(
+                style: TextButton.styleFrom(
+          padding: EdgeInsets.zero,
+          minimumSize: const Size.square(0),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ))),
+        child: ListView(
+          //padding: EdgeInsets.all(16),
+          children: [
+            Card(
+              child: Column(
+                children: [
+                  const ListTile(
+                    title: Text("API Settings"),
                   ),
-                ),
-                ListTile(
-                  title: Text(_settings[SettingsType.apiSecret].toString()),
-                  subtitle: const Text("secret"),
-                  trailing: TextButton(
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size.square(4),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ListTile(
+                    title: Text(_settings[SettingsType.apiClientId].toString()),
+                    subtitle: const Text("client_id"),
+                    trailing: TextButton(
+                      onPressed: () async {
+                        String? newClientId = await showEditDialog(
+                            'Edit client id',
+                            'client_id',
+                            _settings[SettingsType.apiClientId]);
+                        if (newClientId != null) {
+                          await widget.backendController.changeSetting(
+                              SettingsType.apiClientId, newClientId.trim());
+                        }
+                        widget.backendController.openApiClient();
+                        _refreshIndicatorKey.currentState?.show();
+                      },
+                      child: const Text("Edit"),
                     ),
-                    onPressed: () async {
-                      String? newSecret = await showEditDialog('Edit secret',
-                          'secret', _settings[SettingsType.apiSecret]);
-                      if (newSecret != null) {
-                        await widget.backendController.changeSetting(
-                            SettingsType.apiSecret, newSecret.trim());
-                      }
-                      widget.backendController.openApiClient();
-                      _refreshIndicatorKey.currentState?.show();
-                    },
-                    child: const Text("Edit"),
                   ),
-                )
-              ],
+                  ListTile(
+                    title: Text(_settings[SettingsType.apiSecret].toString()),
+                    subtitle: const Text("secret"),
+                    trailing: TextButton(
+                      onPressed: () async {
+                        String? newSecret = await showEditDialog('Edit secret',
+                            'secret', _settings[SettingsType.apiSecret]);
+                        if (newSecret != null) {
+                          await widget.backendController.changeSetting(
+                              SettingsType.apiSecret, newSecret.trim());
+                        }
+                        widget.backendController.openApiClient();
+                        _refreshIndicatorKey.currentState?.show();
+                      },
+                      child: const Text("Edit"),
+                    ),
+                  )
+                ],
+              ),
             ),
-          ),
-          Card(
-            child: Column(
-              children: [
-                ...(_accessTokenCursors.keys.map((key) => ListTile(
-                      title: Text(key),
-                      subtitle: Text(_accessTokenCursors[key]!),
-                    ))),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    TextButton(
+            Card(
+              child: Column(
+                children: [
+                  ListTile(
+                    title: const Text(
+                      "Access tokens",
+                    ),
+                    trailing: TextButton(
                         onPressed: () async {
                           String? newAccessToken = await showEditDialog(
                               'Add access token', 'access_token');
@@ -155,18 +158,61 @@ class _SettingsPageState extends State<SettingsPage> {
                           _refreshIndicatorKey.currentState?.show();
                         },
                         child: const Text('Add')),
-                    TextButton(
-                        onPressed: () async {
-                          await widget.backendController.clearAccessTokens();
-                          _refreshIndicatorKey.currentState?.show();
-                        },
-                        child: const Text('Clear'))
-                  ],
-                )
-              ],
+                  ),
+                  ...(_accessTokenCursors.keys.map((key) => ListTile(
+                        title: Text(key),
+                        subtitle: Text(_accessTokenCursors[key]!),
+                      ))),
+                  _accessTokenCursors.keys.isNotEmpty
+                      ? ListTile(
+                          trailing: TextButton(
+                              onPressed: () async {
+                                await widget.backendController
+                                    .clearAccessTokens();
+                                _refreshIndicatorKey.currentState?.show();
+                              },
+                              child: const Text('Clear')),
+                        )
+                      : const SizedBox.shrink(),
+                ],
+              ),
             ),
-          )
-        ],
+            Card(
+                child: Padding(
+                    padding: EdgeInsets.only(bottom: _budgets.isEmpty ? 0 : 12),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          title: const Text(
+                            "Budgets",
+                          ),
+                          //style: Theme.of(context).textTheme.titleLarge),,
+                          trailing: TextButton(
+                            onPressed: () async {
+                              Budget? newBudget = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => BudgetPage(
+                                            backendController:
+                                                widget.backendController,
+                                            budget: null,
+                                          )));
+                              if (newBudget != null) {
+                                widget.backendController
+                                    .upsertBudget(newBudget);
+                              }
+                              _refreshIndicatorKey.currentState?.show();
+                            },
+                            child: const Text('Add'),
+                          ),
+                        ),
+                        ...(_budgets.map((e) => BudgetListItem(
+                            backendController: widget.backendController,
+                            budget: e)))
+                      ],
+                    )))
+          ],
+        ),
       ),
     );
   }

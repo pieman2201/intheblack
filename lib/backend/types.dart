@@ -157,6 +157,60 @@ class Transaction {
   }
 }
 
+const String tableBudgets = 'budgets';
+const String budgetsColumnId = 'budgets_id';
+const String budgetsColumnName = 'budgets_name';
+const String budgetsColumnType = 'budgets_type';
+const String budgetsColumnLimit = 'budgets_limit';
+const String budgetsColumnIcon = 'budgets_icon';
+
+enum BudgetType {
+  spending,
+  living,
+  income,
+}
+
+class Budget {
+  int id;
+  String name;
+  BudgetType type;
+  num limit;
+  int icon;
+
+  Map<String, dynamic> toMap() {
+    var map = <String, dynamic>{
+      budgetsColumnId: id,
+      budgetsColumnName: name,
+      budgetsColumnType: type.toString(),
+      budgetsColumnLimit: limit,
+      budgetsColumnIcon: icon,
+    };
+    return map;
+  }
+
+  Map<String, dynamic> toUnidentifiedMap() {
+    var map = toMap();
+    map.remove(budgetsColumnId);
+    return map;
+  }
+
+  Budget({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.limit,
+    required this.icon,
+  });
+
+  Budget.fromMap(Map<String, dynamic> map)
+      : id = map[budgetsColumnId],
+        name = map[budgetsColumnName],
+        type = BudgetType.values
+            .firstWhere((e) => e.toString() == map[budgetsColumnType]),
+        limit = map[budgetsColumnLimit],
+        icon = map[budgetsColumnIcon];
+}
+
 const String tableSurfacedTransactions = 'surfaced_transactions';
 const String surfacedTransactionsColumnId = 'surfaced_transactions_id';
 const String surfacedTransactionsColumnRealTransactionId =
@@ -164,10 +218,13 @@ const String surfacedTransactionsColumnRealTransactionId =
 const String surfacedTransactionsColumnPercentOfRealAmount =
     'surfaced_transactions_percent_of_real_amount';
 const String surfacedTransactionsColumnName = 'surfaced_transactions_name';
+const String surfacedTransactionsColumnBudgetId =
+    'surfaced_transactions_budget_id';
 
 class SurfacedTransaction {
   int id;
   Transaction realTransaction;
+  Budget? budget;
   num percentOfRealAmount;
   String name;
 
@@ -176,6 +233,7 @@ class SurfacedTransaction {
       surfacedTransactionsColumnId: id,
       surfacedTransactionsColumnRealTransactionId:
           realTransaction.transactionId,
+      surfacedTransactionsColumnBudgetId: budget?.id,
       surfacedTransactionsColumnPercentOfRealAmount: percentOfRealAmount,
       surfacedTransactionsColumnName: name,
     };
@@ -191,6 +249,7 @@ class SurfacedTransaction {
   SurfacedTransaction({
     required this.id,
     required this.realTransaction,
+    required this.budget,
     required this.percentOfRealAmount,
     required this.name,
   });

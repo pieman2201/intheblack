@@ -32,7 +32,16 @@ class DbClient {
       $surfacedTransactionsColumnId integer primary key autoincrement,
       $surfacedTransactionsColumnRealTransactionId text not null,
       $surfacedTransactionsColumnPercentOfRealAmount real not null,
+      $surfacedTransactionsColumnBudgetId int,
       $surfacedTransactionsColumnName text not null)''');
+
+      await db.execute('''
+      create table $tableBudgets (
+      $budgetsColumnId integer primary key autoincrement,
+      $budgetsColumnName text not null,
+      $budgetsColumnType text not null,
+      $budgetsColumnLimit real not null,
+      $budgetsColumnIcon int not null)''');
 
       await db.execute('''
       create table $tableCursors (
@@ -75,6 +84,14 @@ class DbClient {
     return surfacedTransaction;
   }
 
+  Future<SurfacedTransaction> updateSurfacedTransaction(
+      SurfacedTransaction surfacedTransaction) async {
+    await db.update(tableSurfacedTransactions, surfacedTransaction.toMap(),
+        where: '$surfacedTransactionsColumnId = ?',
+        whereArgs: [surfacedTransaction.id]);
+    return surfacedTransaction;
+  }
+
   Future<SurfacedTransaction> deleteSurfacedTransaction(
       SurfacedTransaction surfacedTransaction) async {
     await db.delete(tableSurfacedTransactions,
@@ -94,17 +111,52 @@ class DbClient {
     return null;
   }
 
+  Future<Budget> insertBudget(Budget budget) async {
+    budget.id = await db.insert(tableBudgets, budget.toUnidentifiedMap());
+    return budget;
+  }
+
+  Future<Budget> updateBudget(Budget budget) async {
+    await db.update(tableBudgets, budget.toMap(),
+        where: '$budgetsColumnId = ?', whereArgs: [budget.id]);
+    return budget;
+  }
+
+  Future<Budget> deleteBudget(Budget budget) async {
+    await db.delete(tableBudgets,
+        where: '$budgetsColumnId = ?', whereArgs: [budget.id]);
+    return budget;
+  }
+
+  Future<Budget?> getBudgetById(int budgetId) async {
+    List<Map<String, dynamic>> maps = await db.query(tableBudgets,
+        where: '$budgetsColumnId = ?', whereArgs: [budgetId]);
+    if (maps.isNotEmpty) {
+      return Budget.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  Future<Iterable<Budget>> getBudgets() async {
+    List<Map<String, dynamic>> maps = await db.query(tableBudgets);
+    return maps.map((e) => Budget.fromMap(e));
+  }
+
   Future<Iterable<SurfacedTransaction>> getSurfacedTransactionsForTransaction(
       Transaction transaction) async {
-    return (await db.query(tableSurfacedTransactions,
-            where: '$surfacedTransactionsColumnRealTransactionId = ?',
-            whereArgs: [transaction.transactionId]))
-        .map((Map<String, dynamic> e) => SurfacedTransaction(
-            id: e[surfacedTransactionsColumnId],
-            realTransaction: transaction,
-            percentOfRealAmount:
-                e[surfacedTransactionsColumnPercentOfRealAmount],
-            name: e[surfacedTransactionsColumnName]));
+    var maps = await db.query(tableSurfacedTransactions,
+        where: '$surfacedTransactionsColumnRealTransactionId = ?',
+        whereArgs: [transaction.transactionId]);
+    List<SurfacedTransaction> surfacedTransactions = [];
+    for (Map<String, dynamic> e in maps) {
+      surfacedTransactions.add(SurfacedTransaction(
+          id: e[surfacedTransactionsColumnId],
+          realTransaction: transaction,
+          budget: await getBudgetById(e[surfacedTransactionsColumnBudgetId]),
+          percentOfRealAmount: e[surfacedTransactionsColumnPercentOfRealAmount],
+          name: e[surfacedTransactionsColumnName]));
+    }
+    return surfacedTransactions;
   }
 
   Future<Iterable<SurfacedTransaction>> getSurfacedTransactionsInDateRange(
@@ -114,6 +166,8 @@ class DbClient {
 
     List<Map<String, dynamic>> maps = await db.rawQuery('''
     select * from $tableSurfacedTransactions
+    left join $tableBudgets
+    on $tableSurfacedTransactions.$surfacedTransactionsColumnBudgetId=$tableBudgets.$budgetsColumnId
     inner join $tableTransactions
     on $tableSurfacedTransactions.$surfacedTransactionsColumnRealTransactionId=$tableTransactions.$transactionsColumnTransactionId
     where $transactionsColumnDate >= $startInt and $transactionsColumnDate <= $endInt
@@ -123,10 +177,34 @@ class DbClient {
         (Map<String, dynamic> map) => SurfacedTransaction(
             id: map[surfacedTransactionsColumnId],
             realTransaction: Transaction.fromMap(map),
+            budget: map[budgetsColumnId] == null ? null : Budget.fromMap(map),
             percentOfRealAmount:
                 map[surfacedTransactionsColumnPercentOfRealAmount],
             name: map[surfacedTransactionsColumnName]));
     return surfacedTransactions;
+  }
+
+  Future<Iterable<SurfacedTransaction>>
+      getSurfacedTransactionsInBudgetInDateRange(
+          Budget budget, DateTime startDate, DateTime endDate) async {
+    num startInt = Transaction.dateToNum(startDate);
+    num endInt = Transaction.dateToNum(endDate);
+
+    List<Map<String, dynamic>> matchingSurfacedTransactionMaps =
+        await db.rawQuery('''
+    select * from $tableSurfacedTransactions
+    left join $tableBudgets
+    on $tableSurfacedTransactions.$surfacedTransactionsColumnBudgetId=$tableBudgets.$budgetsColumnId
+    inner join $tableTransactions
+    on $tableSurfacedTransactions.$surfacedTransactionsColumnRealTransactionId=$tableTransactions.$transactionsColumnTransactionId
+    where $surfacedTransactionsColumnBudgetId = ${budget.id} and $transactionsColumnDate >= $startInt and $transactionsColumnDate <= $endInt
+    ''');
+    return matchingSurfacedTransactionMaps.map((map) => SurfacedTransaction(
+        id: map[surfacedTransactionsColumnId],
+        realTransaction: Transaction.fromMap(map),
+        budget: map[budgetsColumnId] == null ? null : Budget.fromMap(map),
+        percentOfRealAmount: map[surfacedTransactionsColumnPercentOfRealAmount],
+        name: map[surfacedTransactionsColumnName]));
   }
 
   Future<String> updateCursorValue(
