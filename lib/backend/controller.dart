@@ -80,6 +80,11 @@ class BackendController {
     return surfacedTransactionList;
   }
 
+  Future<SurfacedTransaction> updateSurfacedTransaction(
+      SurfacedTransaction surfacedTransaction) async {
+    return await dbClient.updateSurfacedTransaction(surfacedTransaction);
+  }
+
   Future<Map<String, String>> getAccessTokenCursors() async {
     return await dbClient.retrieveCursorValues();
   }

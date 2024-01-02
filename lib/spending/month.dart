@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pfm/backend/controller.dart';
+import 'package:pfm/widgets/spendcard.dart';
 import 'package:pfm/widgets/spendchart.dart';
 
 import '../backend/types.dart';
@@ -21,6 +22,7 @@ class _MonthSpendingPageState extends State<MonthSpendingPage> {
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
   List<SurfacedTransaction> _transactions = [];
+  Iterable<Budget> _budgets = [];
   num? _monthSum;
   DateTime? _beginningOfCurrentMonth;
   DateTime? _endOfCurrentMonth;
@@ -48,6 +50,8 @@ class _MonthSpendingPageState extends State<MonthSpendingPage> {
     var retrievedTransactions = await widget.backendController
         .getSurfacedTransactionsInDateRange(
             _beginningOfCurrentMonth!, _endOfCurrentMonth!);
+
+    _budgets = await widget.backendController.getBudgets();
 
     if (!mounted) return;
     setState(() {
@@ -86,10 +90,15 @@ class _MonthSpendingPageState extends State<MonthSpendingPage> {
                       startDate: _beginningOfCurrentMonth!,
                       endDate: _endOfCurrentMonth!,
                       transactions: _transactions)),
+          SliverToBoxAdapter(
+              child: _transactions.isEmpty
+                  ? const SizedBox.shrink()
+                  : SpendCard(budgets: _budgets, transactions: _transactions)),
           SliverList.separated(
             itemCount: _transactions.length,
             itemBuilder: (BuildContext context, int index) {
               return TransactionListItem(
+                  backendController: widget.backendController,
                   transaction: _transactions[_transactions.length - index - 1]);
             },
             separatorBuilder: (BuildContext context, int index) {

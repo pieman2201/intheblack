@@ -44,6 +44,13 @@ class DbClient {
       $budgetsColumnIcon int not null)''');
 
       await db.execute('''
+      create table $tableRules (
+      $rulesColumnId integer primary key autoincrement,
+      $rulesColumnBudgetId int,
+      $rulesColumnMatcher text not null,
+      $rulesColumnPriority int not null)''');
+
+      await db.execute('''
       create table $tableCursors (
       $cursorsColumnId integer primary key autoincrement,
       $cursorsColumnToken text not null,

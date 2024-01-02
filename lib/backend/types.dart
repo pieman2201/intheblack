@@ -141,8 +141,10 @@ class Transaction {
             // Attempt to source from counterparty if missing in main body
             for (dynamic counterparty in json['counterparties']) {
               var counterpartyMap = counterparty as Map<String, dynamic>;
+              print(counterpartyMap);
               if (counterpartyMap['logo_url'] != null &&
-                  counterpartyMap['name'] != null) {
+                  counterpartyMap['name'] != null &&
+                  counterpartyMap['type'] == 'merchant') {
                 t.logoUrl = counterpartyMap['logo_url']!;
                 t.merchantName = counterpartyMap['name']!;
               }
@@ -309,4 +311,40 @@ const String settingsColumnData = 'settings_data';
 enum SettingsType {
   apiClientId,
   apiSecret,
+}
+
+const String tableRules = 'rules';
+const String rulesColumnId = 'rules_id';
+const String rulesColumnBudgetId = 'rules_budget_id';
+const String rulesColumnMatcher = 'rules_matcher';
+const String rulesColumnPriority = 'rules_priority';
+
+class Rule {
+  int id;
+  Budget? budget;
+  String matcher;
+  int priority;
+
+  Rule({
+    required this.id,
+    required this.budget,
+    required this.matcher,
+    required this.priority,
+  });
+
+  Map<String, dynamic> toMap() {
+    var map = <String, dynamic>{
+      rulesColumnId: id,
+      rulesColumnBudgetId: budget?.id,
+      rulesColumnMatcher: matcher,
+      rulesColumnPriority: priority,
+    };
+    return map;
+  }
+
+  Map<String, dynamic> toUnidentifiedMap() {
+    var map = toMap();
+    map.remove(rulesColumnId);
+    return map;
+  }
 }

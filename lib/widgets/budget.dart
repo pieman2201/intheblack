@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pfm/backend/controller.dart';
 import 'package:pfm/backend/types.dart';
 
-import '../budget/page.dart';
+import '../editors/budgeteditor.dart';
 
 class BudgetListItem extends StatefulWidget {
   final BackendController backendController;

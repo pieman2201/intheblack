@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pfm/backend/controller.dart';
 import 'package:pfm/backend/types.dart';
-import 'package:pfm/budget/page.dart';
+import 'package:pfm/editors/budgeteditor.dart';
 import 'package:pfm/widgets/budget.dart';
 
 class SettingsPage extends StatefulWidget {
