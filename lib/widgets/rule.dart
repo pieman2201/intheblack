@@ -2,26 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:pfm/backend/controller.dart';
 import 'package:pfm/backend/types.dart';
 import 'package:pfm/editors/budgeteditor.dart';
+import 'package:pfm/editors/rule/ruleeditor.dart';
 
-class BudgetListItem extends StatefulWidget {
+class RuleListItem extends StatefulWidget {
   final BackendController backendController;
-  final Budget budget;
+  final RuleWithSegments ruleWithSegments;
 
-  const BudgetListItem(
-      {super.key, required this.backendController, required this.budget});
+  const RuleListItem(
+      {super.key, required this.backendController, required this.ruleWithSegments});
 
   @override
-  State<BudgetListItem> createState() => _BudgetListItemState();
+  State<RuleListItem> createState() => _RuleListItemState();
 }
 
-class _BudgetListItemState extends State<BudgetListItem> {
-  late Budget _budget;
+class _RuleListItemState extends State<RuleListItem> {
+  late RuleWithSegments _rule;
 
   @override
   void initState() {
     super.initState();
 
-    _budget = widget.budget;
+    _rule = widget.ruleWithSegments;
   }
 
   @override
@@ -29,29 +30,27 @@ class _BudgetListItemState extends State<BudgetListItem> {
     return ListTile(
       leading: CircleAvatar(
         child:
-            Icon(IconData(_budget.category.icon, fontFamily: 'MaterialIcons')),
+        Icon(IconData(_rule.rule.category.icon, fontFamily: 'MaterialIcons')),
       ),
       title: Text(
-        _budget.category.name,
+        _rule.rule.category.name,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
       subtitle:
-          Text(_budget.category.type.toString().split('.').last.toUpperCase()),
-      trailing: Text(_budget.limit.isNegative
-          ? '+\$${_budget.limit.abs().toStringAsFixed(2)}'
-          : '\$${_budget.limit.abs().toStringAsFixed(2)}'),
+      Text('${_rule.segments.length} segment(s)'),
+      trailing: Text(_rule.rule.priority.toString()),
       onTap: () async {
-        Budget? newBudget = await Navigator.push(
+        RuleWithSegments? newRule = await Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => BudgetPage(
-                      backendController: widget.backendController,
-                      budget: _budget,
-                    )));
+                builder: (context) => RulePage(
+                  backendController: widget.backendController,
+                  ruleWithSegments: _rule,
+                )));
         setState(() {
-          if (newBudget != null) {
-            _budget = newBudget;
+          if (newRule != null) {
+            _rule = newRule;
           }
         });
       },
@@ -76,7 +75,7 @@ class _BudgetListItemState extends State<BudgetListItem> {
               );
             });
         if (delete ?? false) {
-          await widget.backendController.deleteBudget(_budget);
+          await widget.backendController.deleteRuleWithSegments(_rule);
           setState(() {});
         }
       },

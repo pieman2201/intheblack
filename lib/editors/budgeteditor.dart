@@ -26,6 +26,9 @@ class _BudgetPageState extends State<BudgetPage> {
 
     if (widget.budget != null) {
       _limitEditingController.text = widget.budget!.limit.toString();
+      category = widget.budget!.category;
+    } else {
+      category = widget.backendController.categorizationClient.getFallbackCategory();
     }
   }
 
@@ -37,12 +40,15 @@ class _BudgetPageState extends State<BudgetPage> {
       ),
       body: Column(
         children: [
-          TextField(
-            controller: _limitEditingController,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: 'Limit',
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              controller: _limitEditingController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Limit',
+              ),
             ),
           ),
           FutureBuilder(
@@ -50,7 +56,6 @@ class _BudgetPageState extends State<BudgetPage> {
               builder: (BuildContext context,
                   AsyncSnapshot<Iterable<Category>> snapshot) {
                 if (snapshot.hasData) {
-                  category = snapshot.data!.first;
                   return Column(children: [
                     ...(snapshot.data!
                         .map((e) => RadioListTile<int?>(
@@ -63,13 +68,13 @@ class _BudgetPageState extends State<BudgetPage> {
                                   .last
                                   .toUpperCase()),
                               secondary: CircleAvatar(
-                                child: Icon(IconData(category.icon,
+                                child: Icon(IconData(e.icon,
                                     fontFamily: 'MaterialIcons')),
                               ),
                               onChanged: (int? value) {
                                 setState(() {
                                   category = snapshot.data!
-                                      .firstWhere((element) => e.id == value);
+                                      .firstWhere((element) => element.id == value);
                                 });
                               },
                             ))
@@ -88,6 +93,8 @@ class _BudgetPageState extends State<BudgetPage> {
                   id: -1,
                   category: category,
                   limit: num.parse(_limitEditingController.text.trim()));
+          budget.category = category;
+          budget.limit = num.parse(_limitEditingController.text.trim());
           await widget.backendController.upsertBudget(budget);
           if (context.mounted) {
             Navigator.pop(context, budget);

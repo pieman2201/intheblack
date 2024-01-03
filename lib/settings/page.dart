@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pfm/backend/controller.dart';
 import 'package:pfm/backend/types.dart';
+import 'package:pfm/editors/budgeteditor.dart';
 import 'package:pfm/editors/categoryeditor.dart';
 import 'package:pfm/widgets/budget.dart';
 
@@ -177,40 +178,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 ],
               ),
             ),
-            Card(
-                child: Padding(
-                    padding: EdgeInsets.only(bottom: _budgets.isEmpty ? 0 : 12),
-                    child: Column(
-                      children: [
-                        ListTile(
-                          title: const Text(
-                            "Budgets",
-                          ),
-                          //style: Theme.of(context).textTheme.titleLarge),,
-                          trailing: TextButton(
-                            onPressed: () async {
-                              Category? newBudget = await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => CategoryPage(
-                                            backendController:
-                                                widget.backendController,
-                                            category: null,
-                                          )));
-                              if (newBudget != null) {
-                                widget.backendController
-                                    .upsertCategory(newBudget);
-                              }
-                              _refreshIndicatorKey.currentState?.show();
-                            },
-                            child: const Text('Add'),
-                          ),
-                        ),
-                        ...(_budgets.map((e) => BudgetListItem(
-                            backendController: widget.backendController,
-                            budget: e)))
-                      ],
-                    )))
           ],
         ),
       ),

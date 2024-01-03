@@ -48,6 +48,21 @@ class DbClient {
       $rulesColumnCategoryId int not null,
       $rulesColumnPriority int not null)''');
 
+      // Create first category and rule
+      Category category = Category(
+          id: 0, name: 'Unknown', type: CategoryType.spending, icon: 58123);
+      await db.insert(tableCategories, category.toMap());
+      await db.insert(
+        tableRules,
+        Rule(id: 0, category: category, priority: 0).toMap(),
+      );
+
+      await db.execute('''
+      create table $tableBudgets (
+      $budgetsColumnId integer primary key autoincrement,
+      $budgetsColumnCategoryId int not null,
+      $budgetsColumnLimit real not null)''');
+
       await db.execute('''
       create table $tableRulesegments (
       $rulesegmentsColumnId integer primary key autoincrement,
@@ -162,13 +177,13 @@ class DbClient {
 
   Future<Budget> updateBudget(Budget budget) async {
     await db.update(tableBudgets, budget.toMap(),
-        where: '$rulesColumnId = ?', whereArgs: [budget.id]);
+        where: '$budgetsColumnId = ?', whereArgs: [budget.id]);
     return budget;
   }
 
   Future<Budget> deleteBudget(Budget budget) async {
     await db.delete(tableBudgets,
-        where: '$rulesColumnId = ?', whereArgs: [budget.id]);
+        where: '$budgetsColumnId = ?', whereArgs: [budget.id]);
     return budget;
   }
 
@@ -177,7 +192,7 @@ class DbClient {
     select * from $tableBudgets
     left join $tableCategories
     on $tableBudgets.$budgetsColumnCategoryId=$tableCategories.$categoriesColumnId
-    where $budgetsColumnId = $budgetId}
+    where $budgetsColumnId = $budgetId
     ''');
     if (maps.isNotEmpty) {
       return Budget(

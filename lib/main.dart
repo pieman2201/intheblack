@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:pfm/backend/controller.dart';
+import 'package:pfm/configuration/page.dart';
 import 'package:pfm/settings/page.dart';
 import 'package:pfm/spending/page.dart';
 
@@ -58,6 +59,12 @@ class MyApp extends StatelessWidget {
             navigationIcon: const NavigationDestination(
                 icon: Icon(Icons.local_atm), label: 'Spending'),
           ),
+          BackendDestinationPage(
+              page: ConfigurationPage(
+                backendController: _backendController,
+              ),
+              navigationIcon: const NavigationDestination(
+                  icon: Icon(Icons.filter_list), label: "Filters")),
           DestinationPage(
               page: Container(),
               navigationIcon: const NavigationDestination(

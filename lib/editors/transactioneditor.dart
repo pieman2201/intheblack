@@ -88,12 +88,12 @@ class _TransactionPageState extends State<TransactionPage> {
                                   .last
                                   .toUpperCase()),
                               secondary: CircleAvatar(
-                                child: Icon(IconData(transaction.category.icon, fontFamily: 'MaterialIcons')),
+                                child: Icon(IconData(e.icon, fontFamily: 'MaterialIcons')),
                               ),
                               onChanged: (int? value) {
                                 setState(() {
                                   transaction.category = snapshot.data!
-                                      .firstWhere((element) => e.id == value);
+                                      .firstWhere((element) => element.id == value);
                                 });
                               },
                             ))

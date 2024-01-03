@@ -6,7 +6,7 @@ import './segmenteditor.dart';
 
 class RulePage extends StatefulWidget {
   final BackendController backendController;
-  final RuleWithSegments ruleWithSegments;
+  final RuleWithSegments? ruleWithSegments;
 
   const RulePage(
       {super.key,
@@ -19,12 +19,23 @@ class RulePage extends StatefulWidget {
 
 class _RulePageState extends State<RulePage> {
   late List<Rulesegment> _segments;
+  late Rule _rule;
 
   @override
   void initState() {
     super.initState();
 
-    _segments = widget.ruleWithSegments.segments.toList();
+    if (widget.ruleWithSegments != null) {
+      _rule = widget.ruleWithSegments!.rule;
+      _segments = widget.ruleWithSegments!.segments.toList();
+    } else {
+      _rule = Rule(
+          id: -1,
+          category: widget.backendController.categorizationClient
+              .getFallbackCategory(),
+          priority: 0);
+      _segments = [];
+    }
   }
 
   @override
@@ -33,60 +44,62 @@ class _RulePageState extends State<RulePage> {
       appBar: AppBar(
         title: const Text("Configure rule"),
       ),
-      body: Column(
-        children: [
-          FutureBuilder(
-              future: widget.backendController.getCategories(),
-              builder: (BuildContext context,
-                  AsyncSnapshot<Iterable<Category>> snapshot) {
-                if (snapshot.hasData) {
-                  List<Category> categories = snapshot.data!.toList();
-                  return ListView.builder(
-                      itemBuilder: (BuildContext context, int index) {
-                    return RadioListTile<int>(
-                      value: categories[index].id,
-                      groupValue: widget.ruleWithSegments.rule.category.id,
-                      onChanged: (int? value) {
-                        if (value != null) {
-                          Category category = categories
-                              .firstWhere((element) => element.id == value);
-                          widget.ruleWithSegments.rule.category = category;
-                          setState(() {});
-                        }
+      body: FutureBuilder(
+          future: widget.backendController.getCategories(),
+          builder: (BuildContext context,
+              AsyncSnapshot<Iterable<Category>> snapshot) {
+            if (snapshot.hasData) {
+              List<Category> categories = snapshot.data!.toList();
+              return ListView(
+                children: [
+                  ...(categories.map((e) => RadioListTile<int>(
+                        value: e.id,
+                        groupValue: _rule.category.id,
+                        title: Text(e.name),
+                        subtitle: Text(
+                            e.type.toString().split('.').last.toUpperCase()),
+                        secondary: CircleAvatar(
+                            child: Icon(
+                                IconData(e.icon, fontFamily: 'MaterialIcons'))),
+                        onChanged: (int? value) {
+                          if (value != null) {
+                            Category category = categories
+                                .firstWhere((element) => element.id == value);
+                            _rule.category = category;
+                            setState(() {});
+                          }
+                        },
+                      ))),
+                  ...(() {
+                    List<Widget> wList = [];
+                    for (var i = 0; i < _segments.length; i++) {
+                      wList.add(SegmentEditorItem(
+                        segment: _segments[i],
+                        onEditedCallback: (String param, RegExp regex) {
+                          _segments[i].param = param;
+                          _segments[i].regex = regex;
+                        },
+                      ));
+                    }
+                    return wList;
+                  }()),
+                  TextButton(
+                      onPressed: () {
+                        _segments.add(Rulesegment(
+                            id: -1, rule: _rule, param: '', regex: RegExp('')));
+                        setState(() {});
                       },
-                    );
-                  });
-                }
-                return const SizedBox.shrink();
-              }),
-          ListView.builder(itemBuilder: (BuildContext context, int indexVar) {
-            int index = indexVar;
-            if (index >= _segments.length) {
-              return TextButton(
-                  onPressed: () {
-                    _segments.add(Rulesegment(
-                        id: -1,
-                        rule: widget.ruleWithSegments.rule,
-                        param: '',
-                        regex: RegExp('')));
-                    setState(() {});
-                  },
-                  child: const Text("Add segment"));
+                      child: const Text("Add segment"))
+                ],
+              );
+            } else {
+              return const SizedBox.shrink();
             }
-            return SegmentEditorItem(
-              segment: _segments[index],
-              onEditedCallback: (String param, RegExp regex) {
-                _segments[index].param = param;
-                _segments[index].regex = regex;
-              },
-            );
           }),
-        ],
-      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          RuleWithSegments ruleWithSegments = RuleWithSegments(
-              rule: widget.ruleWithSegments.rule, segments: _segments);
+          RuleWithSegments ruleWithSegments =
+              RuleWithSegments(rule: _rule, segments: _segments);
           await widget.backendController
               .upsertRuleWithSegments(ruleWithSegments);
           if (context.mounted) {

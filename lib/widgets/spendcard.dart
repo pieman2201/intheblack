@@ -27,12 +27,11 @@ class SpendCard extends StatelessWidget {
 
     Map<CategoryType, List<int>> categoryTypeBudgets =
         <CategoryType, List<int>>{};
+    for (CategoryType categoryType in CategoryType.values) {
+      categoryTypeBudgets[categoryType] = [];
+    }
     for (Budget budget in budgets) {
-      if (categoryTypeBudgets[budget.category.type] == null) {
-        categoryTypeBudgets[budget.category.type] = [budget.id];
-      } else {
-        categoryTypeBudgets[budget.category.type]!.add(budget.id);
-      }
+      categoryTypeBudgets[budget.category.type]!.add(budget.id);
 
       if (categorySpends.containsKey(budget.category.id)) {
         budgetPercents[budget.id] =

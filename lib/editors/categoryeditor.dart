@@ -54,19 +54,19 @@ class _CategoryPageState extends State<CategoryPage> {
             segments: const [
               ButtonSegment(
                   value: CategoryType.spending,
-                  label: Text('Spending'),
+                  //label: Text('Spending'),
                   icon: Icon(Icons.show_chart)),
               ButtonSegment(
                   value: CategoryType.living,
-                  label: Text('Living'),
+                  //label: Text('Living'),
                   icon: Icon(Icons.night_shelter_outlined)),
               ButtonSegment(
                   value: CategoryType.income,
-                  label: Text('Income'),
+                  //label: Text('Income'),
                   icon: Icon(Icons.payments_outlined)),
               ButtonSegment(
                   value: CategoryType.ignored,
-                  label: Text('Ignored'),
+                  //label: Text('Ignored'),
                   icon: Icon(Icons.visibility_off_outlined))
             ],
             selected: {_categoryType},
@@ -105,7 +105,7 @@ class _CategoryPageState extends State<CategoryPage> {
         separatorBuilder: (BuildContext context, int index) => const SizedBox(
           height: 8,
         ),
-        itemCount: 4,
+        itemCount: 3,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {

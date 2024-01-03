@@ -2,56 +2,52 @@ import 'package:flutter/material.dart';
 import 'package:pfm/backend/controller.dart';
 import 'package:pfm/backend/types.dart';
 import 'package:pfm/editors/budgeteditor.dart';
+import 'package:pfm/editors/categoryeditor.dart';
 
-class BudgetListItem extends StatefulWidget {
+class CategoryListItem extends StatefulWidget {
   final BackendController backendController;
-  final Budget budget;
+  final Category category;
 
-  const BudgetListItem(
-      {super.key, required this.backendController, required this.budget});
+  const CategoryListItem(
+      {super.key, required this.backendController, required this.category});
 
   @override
-  State<BudgetListItem> createState() => _BudgetListItemState();
+  State<CategoryListItem> createState() => _CategoryListItemState();
 }
 
-class _BudgetListItemState extends State<BudgetListItem> {
-  late Budget _budget;
+class _CategoryListItemState extends State<CategoryListItem> {
+  late Category _category;
 
   @override
   void initState() {
     super.initState();
 
-    _budget = widget.budget;
+    _category = widget.category;
   }
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       leading: CircleAvatar(
-        child:
-            Icon(IconData(_budget.category.icon, fontFamily: 'MaterialIcons')),
+        child: Icon(IconData(_category.icon, fontFamily: 'MaterialIcons')),
       ),
       title: Text(
-        _budget.category.name,
+        _category.name,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      subtitle:
-          Text(_budget.category.type.toString().split('.').last.toUpperCase()),
-      trailing: Text(_budget.limit.isNegative
-          ? '+\$${_budget.limit.abs().toStringAsFixed(2)}'
-          : '\$${_budget.limit.abs().toStringAsFixed(2)}'),
+      subtitle: Text(_category.type.toString().split('.').last.toUpperCase()),
       onTap: () async {
-        Budget? newBudget = await Navigator.push(
+        Category? newCategory = await Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => BudgetPage(
+                builder: (context) => CategoryPage(
                       backendController: widget.backendController,
-                      budget: _budget,
+                      category: _category,
                     )));
         setState(() {
-          if (newBudget != null) {
-            _budget = newBudget;
+          if (newCategory != null) {
+            _category = newCategory;
           }
         });
       },
@@ -60,7 +56,7 @@ class _BudgetListItemState extends State<BudgetListItem> {
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
-                title: const Text("Delete budget?"),
+                title: const Text("Delete category?"),
                 actions: [
                   TextButton(
                       onPressed: () {
@@ -76,7 +72,7 @@ class _BudgetListItemState extends State<BudgetListItem> {
               );
             });
         if (delete ?? false) {
-          await widget.backendController.deleteBudget(_budget);
+          await widget.backendController.deleteCategory(_category);
           setState(() {});
         }
       },

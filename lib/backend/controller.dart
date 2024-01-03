@@ -2,14 +2,18 @@ import 'package:pfm/backend/api.dart';
 import 'package:pfm/backend/db.dart';
 import 'package:pfm/backend/types.dart';
 
+import 'categorize.dart';
+
 class BackendController {
   DbClient dbClient;
   late ApiClient apiClient;
+  late CategorizationClient categorizationClient;
 
   BackendController() : dbClient = DbClient();
 
   Future open() async {
     await dbClient.open();
+    await loadCategorizationClient();
     await openApiClient();
   }
 
@@ -19,12 +23,19 @@ class BackendController {
         settings[SettingsType.apiSecret].toString());
   }
 
+  Future loadCategorizationClient() async {
+    categorizationClient = CategorizationClient(
+      (await getCategories()).firstWhere((element) => element.id == 0),
+      await getRulesWithSegments(),
+    );
+  }
+
   Future insertTransactionAndSurface(Transaction transaction) async {
     await dbClient.insertTransaction(transaction);
     await dbClient.insertSurfacedTransaction(SurfacedTransaction(
         id: -1,
         realTransaction: transaction,
-        category: null,
+        category: categorizationClient.categorizeTransaction(transaction),
         percentOfRealAmount: 100,
         name: transaction.merchantName ?? transaction.name));
   }
@@ -132,7 +143,8 @@ class BackendController {
             DateTime.now().add(const Duration(days: 1)));
 
     for (SurfacedTransaction budgetTransaction in allBudgetTransactions) {
-      budgetTransaction.category = null;
+      budgetTransaction.category = categorizationClient
+          .categorizeTransaction(budgetTransaction.realTransaction);
       await dbClient.updateSurfacedTransaction(budgetTransaction);
     }
 
@@ -157,6 +169,16 @@ class BackendController {
 
   Future deleteBudget(Budget budget) async {
     await dbClient.deleteBudget(budget);
+  }
+
+  Future<Iterable<RuleWithSegments>> getRulesWithSegments() async {
+    Iterable<Rule> rules = await dbClient.getRules();
+    List<RuleWithSegments> rulesWithSegments = [];
+    for (var rule in rules) {
+      rulesWithSegments.add(RuleWithSegments(
+          rule: rule, segments: await dbClient.getRulesegmentsForRule(rule)));
+    }
+    return rulesWithSegments;
   }
 
   Future<RuleWithSegments> upsertRuleWithSegments(
@@ -190,6 +212,17 @@ class BackendController {
       }
     }
 
+    await loadCategorizationClient();
+
     return ruleWithSegments;
+  }
+
+  Future deleteRuleWithSegments(RuleWithSegments ruleWithSegments) async {
+    await dbClient.deleteRule(ruleWithSegments.rule);
+    for (var segment in ruleWithSegments.segments) {
+      await dbClient.deleteRulesegment(segment);
+    }
+
+    await loadCategorizationClient();
   }
 }

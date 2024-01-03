@@ -282,6 +282,18 @@ class RuleWithSegments {
   Iterable<Rulesegment> segments;
 
   RuleWithSegments({required this.rule, required this.segments});
+
+  bool matchesTransaction(Transaction transaction) {
+    Map<String, dynamic> transactionMap = transaction.toMap();
+    for (var segment in segments) {
+      String paramValue = transactionMap['transactions_${segment.param}'];
+      if (!segment.regex.hasMatch(paramValue)){
+        return false;
+      }
+    }
+    // All segments passed
+    return true;
+  }
 }
 
 const String tableBudgets = 'budgets';

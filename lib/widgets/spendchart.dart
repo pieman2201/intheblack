@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
@@ -8,7 +10,7 @@ class SpendChart extends StatelessWidget {
   final DateTime endDate;
   final List<SurfacedTransaction> transactions;
 
-  final Map<DateTime, num> runningSpendSum = <DateTime, num>{};
+  final Map<int, num> daySpendSum = <int, num>{};
   final List<FlSpot> spendLineSpots = [];
   late final List<FlSpot> projectedLineSpots = [];
 
@@ -19,46 +21,43 @@ class SpendChart extends StatelessWidget {
       required this.transactions}) {
     transactions.sort(
         (a, b) => a.realTransaction.date.compareTo(b.realTransaction.date));
-    runningSpendSum[startDate] = 0;
-    num runningSpendTotal = 0;
     for (SurfacedTransaction transaction in transactions) {
-      if (transaction.category?.type == CategoryType.spending) {
-        runningSpendTotal += transaction.getAmount();
-        runningSpendSum[transaction.realTransaction.date] = runningSpendTotal;
+      if (transaction.category.type == CategoryType.spending) {
+        if (!daySpendSum.containsKey(transaction.realTransaction.date.day)) {
+          daySpendSum[transaction.realTransaction.date.day] = 0;
+        }
+        daySpendSum[transaction.realTransaction.date.day] =
+            daySpendSum[transaction.realTransaction.date.day]! +
+                transaction.getAmount();
       }
     }
+    print(daySpendSum);
     spendLineSpots.add(const FlSpot(0, 0));
-    DateTime iteratorDate =
-        DateTime(startDate.year, startDate.month, startDate.day);
+
+    int daysToCount = DateTime.fromMillisecondsSinceEpoch(min(
+            endDate.millisecondsSinceEpoch,
+            DateTime.now().millisecondsSinceEpoch))
+        .difference(startDate)
+        .inDays;
+
     num iteratorSum = 0;
-    while (iteratorDate.isBefore(endDate) && iteratorDate.isBefore(DateTime.now())) {
-      if (runningSpendSum.containsKey(iteratorDate)) {
-        iteratorSum = runningSpendSum[iteratorDate]!;
+    for (var i = 1; i <= daysToCount + 1; i++) {
+      if (daySpendSum.containsKey(i)) {
+        iteratorSum += daySpendSum[i]!;
       }
-      spendLineSpots
-          .add(FlSpot(iteratorDate.day.toDouble(), iteratorSum.toDouble()));
-      iteratorDate = iteratorDate.add(const Duration(days: 1));
+      spendLineSpots.add(FlSpot(i.toDouble(), iteratorSum.toDouble()));
     }
     DateTime maxDate = DateTime.now();
-    if (transactions.last.realTransaction.date.isAfter(maxDate)) {
-      maxDate = transactions.last.realTransaction.date;
-    }
     if (maxDate.isBefore(endDate)) {
-      spendLineSpots.add(
-          FlSpot(maxDate.day.toDouble(), runningSpendTotal.toDouble()));
-      num dailySpendRate =
-          runningSpendTotal / (maxDate.day.toDouble() - 1);
+      num dailySpendRate = iteratorSum / (maxDate.day.toDouble() - 1);
       projectedLineSpots.addAll([
-        FlSpot(maxDate.day.toDouble(), runningSpendTotal.toDouble()),
+        FlSpot(maxDate.day.toDouble(), iteratorSum.toDouble()),
         FlSpot(
             endDate.day.toDouble(),
-            runningSpendTotal.toDouble() +
+            iteratorSum.toDouble() +
                 (dailySpendRate * (endDate.day - maxDate.day))),
       ]);
       print(projectedLineSpots);
-    } else {
-      spendLineSpots
-          .add(FlSpot(endDate.day.toDouble(), runningSpendTotal.toDouble()));
     }
     print(spendLineSpots);
   }
