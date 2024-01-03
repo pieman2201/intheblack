@@ -29,8 +29,8 @@ class _TransactionListItemState extends State<TransactionListItem> {
   Widget build(BuildContext context) {
     return ListTile(
         leading: CircleAvatar(
-          child: Icon(_transaction.budget != null
-              ? IconData(_transaction.budget!.icon, fontFamily: 'MaterialIcons')
+          child: Icon(_transaction.category != null
+              ? IconData(_transaction.category!.icon, fontFamily: 'MaterialIcons')
               : Icons.question_mark),
         ),
         title: Text(

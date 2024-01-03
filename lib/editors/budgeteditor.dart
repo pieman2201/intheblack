@@ -11,29 +11,21 @@ class BudgetPage extends StatefulWidget {
       {super.key, required this.backendController, required this.budget});
 
   @override
-  State<StatefulWidget> createState() => _BudgetPageState();
+  State<BudgetPage> createState() => _BudgetPageState();
 }
 
 class _BudgetPageState extends State<BudgetPage> {
-  late TextEditingController _nameEditingController;
   late TextEditingController _limitEditingController;
-  late TextEditingController _iconEditingController;
-
-  BudgetType _budgetType = BudgetType.spending;
+  late Category category;
 
   @override
   void initState() {
     super.initState();
 
-    _nameEditingController = TextEditingController();
     _limitEditingController = TextEditingController();
-    _iconEditingController = TextEditingController();
 
     if (widget.budget != null) {
-      _nameEditingController.text = widget.budget!.name;
       _limitEditingController.text = widget.budget!.limit.toString();
-      _iconEditingController.text = widget.budget!.icon.toInt().toString();
-      _budgetType = widget.budget!.type;
     }
   }
 
@@ -43,100 +35,59 @@ class _BudgetPageState extends State<BudgetPage> {
       appBar: AppBar(
         title: const Text("Configure budget"),
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemBuilder: (BuildContext context, int index) => [
+      body: Column(
+        children: [
           TextField(
-            controller: _nameEditingController,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: 'Name',
-            ),
-          ),
-          TextField(
-            keyboardType: TextInputType.number,
             controller: _limitEditingController,
+            keyboardType: TextInputType.number,
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
               labelText: 'Limit',
             ),
           ),
-          SegmentedButton<BudgetType>(
-            segments: const [
-              ButtonSegment(
-                  value: BudgetType.spending,
-                  label: Text('Spending'),
-                  icon: Icon(Icons.show_chart)),
-              ButtonSegment(
-                  value: BudgetType.living,
-                  label: Text('Living'),
-                  icon: Icon(Icons.night_shelter_outlined)),
-              ButtonSegment(
-                  value: BudgetType.income,
-                  label: Text('Income'),
-                  icon: Icon(Icons.payments_outlined)),
-            ],
-            selected: {_budgetType},
-            onSelectionChanged: (Set<BudgetType> newSelection) {
-              setState(() {
-                _budgetType = newSelection.first;
-              });
-            },
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  autocorrect: false,
-                  controller: _iconEditingController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Icon code',
-                  ),
-                  onEditingComplete: () {
-                    setState(() {});
-                  },
-                ),
-              ),
-              const SizedBox(
-                width: 8,
-              ),
-              CircleAvatar(
-                  child: _iconEditingController.text.isEmpty
-                      ? const Icon(Icons.check_box_outline_blank)
-                      : Icon(IconData(int.parse(_iconEditingController.text),
-                          fontFamily: 'MaterialIcons')))
-            ],
-          ),
-        ][index],
-        separatorBuilder: (BuildContext context, int index) => const SizedBox(
-          height: 8,
-        ),
-        itemCount: 4,
+          FutureBuilder(
+              future: widget.backendController.getCategories(),
+              builder: (BuildContext context,
+                  AsyncSnapshot<Iterable<Category>> snapshot) {
+                if (snapshot.hasData) {
+                  category = snapshot.data!.first;
+                  return Column(children: [
+                    ...(snapshot.data!
+                        .map((e) => RadioListTile<int?>(
+                              value: e.id,
+                              groupValue: category.id,
+                              title: Text(e.name),
+                              subtitle: Text(e.type
+                                  .toString()
+                                  .split('.')
+                                  .last
+                                  .toUpperCase()),
+                              secondary: CircleAvatar(
+                                child: Icon(IconData(category.icon,
+                                    fontFamily: 'MaterialIcons')),
+                              ),
+                              onChanged: (int? value) {
+                                setState(() {
+                                  category = snapshot.data!
+                                      .firstWhere((element) => e.id == value);
+                                });
+                              },
+                            ))
+                        .toList()),
+                  ]);
+                } else {
+                  return const SizedBox.shrink();
+                }
+              })
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           Budget budget = widget.budget ??
               Budget(
-                id: -1,
-                name: '',
-                type: BudgetType.spending,
-                icon: 0,
-                limit: 0,
-              );
-          try {
-            if (_nameEditingController.text.isEmpty) {
-              throw Exception();
-            }
-            budget.name = _nameEditingController.text.trim();
-            budget.type = _budgetType;
-            budget.limit = num.parse(_limitEditingController.text);
-            budget.icon = int.parse(_iconEditingController.text);
-          } on Exception {
-            ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Please submit a valid budget")));
-            return;
-          }
+                  id: -1,
+                  category: category,
+                  limit: num.parse(_limitEditingController.text.trim()));
           await widget.backendController.upsertBudget(budget);
           if (context.mounted) {
             Navigator.pop(context, budget);

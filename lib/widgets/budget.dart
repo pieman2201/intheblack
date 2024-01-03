@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:pfm/backend/controller.dart';
 import 'package:pfm/backend/types.dart';
+import 'package:pfm/editors/budgeteditor.dart';
 
-import '../editors/budgeteditor.dart';
+import '../editors/categoryeditor.dart';
 
 class BudgetListItem extends StatefulWidget {
   final BackendController backendController;
@@ -29,14 +30,16 @@ class _BudgetListItemState extends State<BudgetListItem> {
   Widget build(BuildContext context) {
     return ListTile(
       leading: CircleAvatar(
-        child: Icon(IconData(_budget.icon, fontFamily: 'MaterialIcons')),
+        child:
+            Icon(IconData(_budget.category.icon, fontFamily: 'MaterialIcons')),
       ),
       title: Text(
-        _budget.name,
+        _budget.category.name,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      subtitle: Text(_budget.type.toString().split('.').last.toUpperCase()),
+      subtitle:
+          Text(_budget.category.type.toString().split('.').last.toUpperCase()),
       trailing: Text(_budget.limit.isNegative
           ? '+\$${_budget.limit.abs().toStringAsFixed(2)}'
           : '\$${_budget.limit.abs().toStringAsFixed(2)}'),

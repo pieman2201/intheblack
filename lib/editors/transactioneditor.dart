@@ -72,34 +72,27 @@ class _TransactionPageState extends State<TransactionPage> {
             ),
           )),
           FutureBuilder(
-              future: widget.backendController.getBudgets(),
+              future: widget.backendController.getCategories(),
               builder: (BuildContext context,
-                  AsyncSnapshot<Iterable<Budget>> snapshot) {
+                  AsyncSnapshot<Iterable<Category>> snapshot) {
                 if (snapshot.hasData) {
                   return Column(children: [
-                    RadioListTile<int?>(
-                      value: null,
-                      groupValue: transaction.budget?.id,
-                      title: const Text("Ignore"),
-                      onChanged: (int? value) {
-                        setState(() {
-                          transaction.budget = null;
-                        });
-                      },
-                    ),
                     ...(snapshot.data!
                         .map((e) => RadioListTile<int?>(
                               value: e.id,
-                              groupValue: transaction.budget?.id,
+                              groupValue: transaction.category.id,
                               title: Text(e.name),
                               subtitle: Text(e.type
                                   .toString()
                                   .split('.')
                                   .last
                                   .toUpperCase()),
+                              secondary: CircleAvatar(
+                                child: Icon(IconData(transaction.category.icon, fontFamily: 'MaterialIcons')),
+                              ),
                               onChanged: (int? value) {
                                 setState(() {
-                                  transaction.budget = snapshot.data!
+                                  transaction.category = snapshot.data!
                                       .firstWhere((element) => e.id == value);
                                 });
                               },

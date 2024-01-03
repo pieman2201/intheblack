@@ -159,35 +159,149 @@ class Transaction {
   }
 }
 
-const String tableBudgets = 'budgets';
-const String budgetsColumnId = 'budgets_id';
-const String budgetsColumnName = 'budgets_name';
-const String budgetsColumnType = 'budgets_type';
-const String budgetsColumnLimit = 'budgets_limit';
-const String budgetsColumnIcon = 'budgets_icon';
+const String tableCategories = 'categories';
+const String categoriesColumnId = 'categories_id';
+const String categoriesColumnName = 'categories_name';
+const String categoriesColumnType = 'categories_type';
+const String categoriesColumnIcon = 'categories_icon';
 
-enum BudgetType {
+enum CategoryType {
   spending,
   living,
   income,
+  ignored,
 }
 
-class Budget {
+class Category {
   int id;
   String name;
-  BudgetType type;
-  num limit;
+  CategoryType type;
   int icon;
 
   Map<String, dynamic> toMap() {
     var map = <String, dynamic>{
-      budgetsColumnId: id,
-      budgetsColumnName: name,
-      budgetsColumnType: type.toString(),
-      budgetsColumnLimit: limit,
-      budgetsColumnIcon: icon,
+      categoriesColumnId: id,
+      categoriesColumnName: name,
+      categoriesColumnType: type.toString(),
+      categoriesColumnIcon: icon,
     };
     return map;
+  }
+
+  Map<String, dynamic> toUnidentifiedMap() {
+    var map = toMap();
+    map.remove(categoriesColumnId);
+    return map;
+  }
+
+  Category({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.icon,
+  });
+
+  Category.fromMap(Map<String, dynamic> map)
+      : id = map[categoriesColumnId],
+        name = map[categoriesColumnName],
+        type = CategoryType.values
+            .firstWhere((e) => e.toString() == map[categoriesColumnType]),
+        icon = map[categoriesColumnIcon];
+}
+
+const String tableRules = 'rules';
+const String rulesColumnId = 'rules_id';
+const String rulesColumnCategoryId = 'rules_category_id';
+const String rulesColumnPriority = 'rules_priority';
+
+class Rule {
+  int id;
+  Category category;
+  int priority;
+
+  Rule({
+    required this.id,
+    required this.category,
+    required this.priority,
+  });
+
+  Map<String, dynamic> toMap() {
+    var map = <String, dynamic>{
+      rulesColumnId: id,
+      rulesColumnCategoryId: category.id,
+      rulesColumnPriority: priority,
+    };
+    return map;
+  }
+
+  Map<String, dynamic> toUnidentifiedMap() {
+    var map = toMap();
+    map.remove(rulesColumnId);
+    return map;
+  }
+}
+
+const String tableRulesegments = 'rulesegments';
+const String rulesegmentsColumnId = 'rulesegments_id';
+const String rulesegmentsColumnRuleId = 'rulesegments_rule_id';
+const String rulesegmentsColumnParam = 'rulesegments_param';
+const String rulesegmentsColumnRegex = 'rulesegments_regex';
+
+class Rulesegment {
+  int id;
+  Rule rule;
+  String param;
+  RegExp regex;
+
+  Rulesegment({
+    required this.id,
+    required this.rule,
+    required this.param,
+    required this.regex,
+  });
+
+  Map<String, dynamic> toMap() {
+    var map = <String, dynamic>{
+      rulesegmentsColumnId: id,
+      rulesegmentsColumnRuleId: rule.id,
+      rulesegmentsColumnParam: param,
+      rulesegmentsColumnRegex: regex.pattern,
+    };
+    return map;
+  }
+
+  Map<String, dynamic> toUnidentifiedMap() {
+    var map = toMap();
+    map.remove(rulesegmentsColumnId);
+    return map;
+  }
+}
+
+class RuleWithSegments {
+  Rule rule;
+  Iterable<Rulesegment> segments;
+
+  RuleWithSegments({required this.rule, required this.segments});
+}
+
+const String tableBudgets = 'budgets';
+const String budgetsColumnId = 'budgets_id';
+const String budgetsColumnCategoryId = 'budgets_category_id';
+const String budgetsColumnLimit = 'budgets_limit';
+
+class Budget {
+  int id;
+  Category category;
+  num limit;
+
+  Budget({required this.id, required this.category, required this.limit});
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      budgetsColumnId: id,
+      budgetsColumnCategoryId: category.id,
+      budgetsColumnLimit: limit,
+    };
   }
 
   Map<String, dynamic> toUnidentifiedMap() {
@@ -195,22 +309,6 @@ class Budget {
     map.remove(budgetsColumnId);
     return map;
   }
-
-  Budget({
-    required this.id,
-    required this.name,
-    required this.type,
-    required this.limit,
-    required this.icon,
-  });
-
-  Budget.fromMap(Map<String, dynamic> map)
-      : id = map[budgetsColumnId],
-        name = map[budgetsColumnName],
-        type = BudgetType.values
-            .firstWhere((e) => e.toString() == map[budgetsColumnType]),
-        limit = map[budgetsColumnLimit],
-        icon = map[budgetsColumnIcon];
 }
 
 const String tableSurfacedTransactions = 'surfaced_transactions';
@@ -220,13 +318,13 @@ const String surfacedTransactionsColumnRealTransactionId =
 const String surfacedTransactionsColumnPercentOfRealAmount =
     'surfaced_transactions_percent_of_real_amount';
 const String surfacedTransactionsColumnName = 'surfaced_transactions_name';
-const String surfacedTransactionsColumnBudgetId =
-    'surfaced_transactions_budget_id';
+const String surfacedTransactionsColumnCategoryId =
+    'surfaced_transactions_category_id';
 
 class SurfacedTransaction {
   int id;
   Transaction realTransaction;
-  Budget? budget;
+  Category category;
   num percentOfRealAmount;
   String name;
 
@@ -235,7 +333,7 @@ class SurfacedTransaction {
       surfacedTransactionsColumnId: id,
       surfacedTransactionsColumnRealTransactionId:
           realTransaction.transactionId,
-      surfacedTransactionsColumnBudgetId: budget?.id,
+      surfacedTransactionsColumnCategoryId: category.id,
       surfacedTransactionsColumnPercentOfRealAmount: percentOfRealAmount,
       surfacedTransactionsColumnName: name,
     };
@@ -251,7 +349,7 @@ class SurfacedTransaction {
   SurfacedTransaction({
     required this.id,
     required this.realTransaction,
-    required this.budget,
+    required this.category,
     required this.percentOfRealAmount,
     required this.name,
   });
@@ -311,40 +409,4 @@ const String settingsColumnData = 'settings_data';
 enum SettingsType {
   apiClientId,
   apiSecret,
-}
-
-const String tableRules = 'rules';
-const String rulesColumnId = 'rules_id';
-const String rulesColumnBudgetId = 'rules_budget_id';
-const String rulesColumnMatcher = 'rules_matcher';
-const String rulesColumnPriority = 'rules_priority';
-
-class Rule {
-  int id;
-  Budget? budget;
-  String matcher;
-  int priority;
-
-  Rule({
-    required this.id,
-    required this.budget,
-    required this.matcher,
-    required this.priority,
-  });
-
-  Map<String, dynamic> toMap() {
-    var map = <String, dynamic>{
-      rulesColumnId: id,
-      rulesColumnBudgetId: budget?.id,
-      rulesColumnMatcher: matcher,
-      rulesColumnPriority: priority,
-    };
-    return map;
-  }
-
-  Map<String, dynamic> toUnidentifiedMap() {
-    var map = toMap();
-    map.remove(rulesColumnId);
-    return map;
-  }
 }

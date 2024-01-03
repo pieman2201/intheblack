@@ -23,7 +23,6 @@ class _MonthSpendingPageState extends State<MonthSpendingPage> {
       GlobalKey<RefreshIndicatorState>();
   List<SurfacedTransaction> _transactions = [];
   Iterable<Budget> _budgets = [];
-  num? _monthSum;
   DateTime? _beginningOfCurrentMonth;
   DateTime? _endOfCurrentMonth;
 
@@ -56,11 +55,6 @@ class _MonthSpendingPageState extends State<MonthSpendingPage> {
     if (!mounted) return;
     setState(() {
       _transactions = retrievedTransactions;
-      if (retrievedTransactions.isNotEmpty) {
-        _monthSum = retrievedTransactions
-            .map((e) => e.getAmount())
-            .reduce((value, element) => value + element);
-      }
     });
   }
 

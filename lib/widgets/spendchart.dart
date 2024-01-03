@@ -22,31 +22,45 @@ class SpendChart extends StatelessWidget {
     runningSpendSum[startDate] = 0;
     num runningSpendTotal = 0;
     for (SurfacedTransaction transaction in transactions) {
-      runningSpendTotal += transaction.getAmount();
-      runningSpendSum[transaction.realTransaction.date] = runningSpendTotal;
+      if (transaction.category?.type == CategoryType.spending) {
+        runningSpendTotal += transaction.getAmount();
+        runningSpendSum[transaction.realTransaction.date] = runningSpendTotal;
+      }
     }
-    var dateKeys = runningSpendSum.keys.toList();
-    dateKeys.sort((a, b) => a.compareTo(b));
     spendLineSpots.add(const FlSpot(0, 0));
-    for (DateTime dateKey in dateKeys) {
-      spendLineSpots.add(
-          FlSpot(dateKey.day.toDouble(), runningSpendSum[dateKey]!.toDouble()));
+    DateTime iteratorDate =
+        DateTime(startDate.year, startDate.month, startDate.day);
+    num iteratorSum = 0;
+    while (iteratorDate.isBefore(endDate) && iteratorDate.isBefore(DateTime.now())) {
+      if (runningSpendSum.containsKey(iteratorDate)) {
+        iteratorSum = runningSpendSum[iteratorDate]!;
+      }
+      spendLineSpots
+          .add(FlSpot(iteratorDate.day.toDouble(), iteratorSum.toDouble()));
+      iteratorDate = iteratorDate.add(const Duration(days: 1));
     }
-    if (DateTime.now().isBefore(endDate)) {
+    DateTime maxDate = DateTime.now();
+    if (transactions.last.realTransaction.date.isAfter(maxDate)) {
+      maxDate = transactions.last.realTransaction.date;
+    }
+    if (maxDate.isBefore(endDate)) {
       spendLineSpots.add(
-          FlSpot(DateTime.now().day.toDouble(), runningSpendTotal.toDouble()));
+          FlSpot(maxDate.day.toDouble(), runningSpendTotal.toDouble()));
       num dailySpendRate =
-          runningSpendTotal / (dateKeys.last.day.toDouble() - 1);
+          runningSpendTotal / (maxDate.day.toDouble() - 1);
       projectedLineSpots.addAll([
-        FlSpot(DateTime.now().day.toDouble(), runningSpendTotal.toDouble()),
+        FlSpot(maxDate.day.toDouble(), runningSpendTotal.toDouble()),
         FlSpot(
             endDate.day.toDouble(),
             runningSpendTotal.toDouble() +
-                (dailySpendRate * (endDate.day - DateTime.now().day))),
+                (dailySpendRate * (endDate.day - maxDate.day))),
       ]);
+      print(projectedLineSpots);
     } else {
-      spendLineSpots.add(FlSpot(endDate.day.toDouble(), runningSpendTotal.toDouble()));
+      spendLineSpots
+          .add(FlSpot(endDate.day.toDouble(), runningSpendTotal.toDouble()));
     }
+    print(spendLineSpots);
   }
 
   @override
@@ -76,7 +90,8 @@ class SpendChart extends StatelessWidget {
                   lineBarsData: [
                     LineChartBarData(
                         spots: spendLineSpots,
-                        isCurved: true,
+                        //isCurved: true,
+                        isStrokeJoinRound: true,
                         isStrokeCapRound: true,
                         barWidth: 4,
                         color: Theme.of(context).colorScheme.primary,

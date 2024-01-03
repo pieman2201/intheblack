@@ -32,23 +32,28 @@ class DbClient {
       $surfacedTransactionsColumnId integer primary key autoincrement,
       $surfacedTransactionsColumnRealTransactionId text not null,
       $surfacedTransactionsColumnPercentOfRealAmount real not null,
-      $surfacedTransactionsColumnBudgetId int,
+      $surfacedTransactionsColumnCategoryId int not null,
       $surfacedTransactionsColumnName text not null)''');
 
       await db.execute('''
-      create table $tableBudgets (
-      $budgetsColumnId integer primary key autoincrement,
-      $budgetsColumnName text not null,
-      $budgetsColumnType text not null,
-      $budgetsColumnLimit real not null,
-      $budgetsColumnIcon int not null)''');
+      create table $tableCategories (
+      $categoriesColumnId integer primary key autoincrement,
+      $categoriesColumnName text not null,
+      $categoriesColumnType text not null,
+      $categoriesColumnIcon int not null)''');
 
       await db.execute('''
       create table $tableRules (
       $rulesColumnId integer primary key autoincrement,
-      $rulesColumnBudgetId int,
-      $rulesColumnMatcher text not null,
+      $rulesColumnCategoryId int not null,
       $rulesColumnPriority int not null)''');
+
+      await db.execute('''
+      create table $tableRulesegments (
+      $rulesegmentsColumnId integer primary key autoincrement,
+      $rulesegmentsColumnRuleId int not null,
+      $rulesegmentsColumnParam text not null,
+      $rulesegmentsColumnRegex text not null)''');
 
       await db.execute('''
       create table $tableCursors (
@@ -118,6 +123,38 @@ class DbClient {
     return null;
   }
 
+  Future<Category> insertCategory(Category category) async {
+    category.id =
+        await db.insert(tableCategories, category.toUnidentifiedMap());
+    return category;
+  }
+
+  Future<Category> updateCategory(Category category) async {
+    await db.update(tableCategories, category.toMap(),
+        where: '$categoriesColumnId = ?', whereArgs: [category.id]);
+    return category;
+  }
+
+  Future<Category> deleteCategory(Category category) async {
+    await db.delete(tableCategories,
+        where: '$categoriesColumnId = ?', whereArgs: [category.id]);
+    return category;
+  }
+
+  Future<Category?> getCategoryById(int categoryId) async {
+    List<Map<String, dynamic>> maps = await db.query(tableCategories,
+        where: '$categoriesColumnId = ?', whereArgs: [categoryId]);
+    if (maps.isNotEmpty) {
+      return Category.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  Future<Iterable<Category>> getCategories() async {
+    List<Map<String, dynamic>> maps = await db.query(tableCategories);
+    return maps.map((e) => Category.fromMap(e));
+  }
+
   Future<Budget> insertBudget(Budget budget) async {
     budget.id = await db.insert(tableBudgets, budget.toUnidentifiedMap());
     return budget;
@@ -125,28 +162,115 @@ class DbClient {
 
   Future<Budget> updateBudget(Budget budget) async {
     await db.update(tableBudgets, budget.toMap(),
-        where: '$budgetsColumnId = ?', whereArgs: [budget.id]);
+        where: '$rulesColumnId = ?', whereArgs: [budget.id]);
     return budget;
   }
 
   Future<Budget> deleteBudget(Budget budget) async {
     await db.delete(tableBudgets,
-        where: '$budgetsColumnId = ?', whereArgs: [budget.id]);
+        where: '$rulesColumnId = ?', whereArgs: [budget.id]);
     return budget;
   }
 
   Future<Budget?> getBudgetById(int budgetId) async {
-    List<Map<String, dynamic>> maps = await db.query(tableBudgets,
-        where: '$budgetsColumnId = ?', whereArgs: [budgetId]);
+    List<Map<String, dynamic>> maps = await db.rawQuery('''
+    select * from $tableBudgets
+    left join $tableCategories
+    on $tableBudgets.$budgetsColumnCategoryId=$tableCategories.$categoriesColumnId
+    where $budgetsColumnId = $budgetId}
+    ''');
     if (maps.isNotEmpty) {
-      return Budget.fromMap(maps.first);
+      return Budget(
+          id: maps.first[budgetsColumnId],
+          category: Category.fromMap(maps.first),
+          limit: maps.first[budgetsColumnLimit]);
     }
     return null;
   }
 
   Future<Iterable<Budget>> getBudgets() async {
-    List<Map<String, dynamic>> maps = await db.query(tableBudgets);
-    return maps.map((e) => Budget.fromMap(e));
+    List<Map<String, dynamic>> maps = await db.rawQuery('''
+    select * from $tableBudgets
+    left join $tableCategories
+    on $tableBudgets.$budgetsColumnCategoryId=$tableCategories.$categoriesColumnId
+    ''');
+    return maps.map((e) => Budget(
+        id: e[budgetsColumnId],
+        category: Category.fromMap(e),
+        limit: e[budgetsColumnLimit]));
+  }
+
+  Future<Rule> insertRule(Rule rule) async {
+    rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+    return rule;
+  }
+
+  Future<Rule> updateRule(Rule rule) async {
+    await db.update(tableRules, rule.toMap(),
+        where: '$rulesColumnId = ?', whereArgs: [rule.id]);
+    return rule;
+  }
+
+  Future<Rule> deleteRule(Rule rule) async {
+    await db
+        .delete(tableRules, where: '$rulesColumnId = ?', whereArgs: [rule.id]);
+    return rule;
+  }
+
+  Future<Rule?> getRuleById(int ruleId) async {
+    List<Map<String, dynamic>> maps = await db.rawQuery('''
+    select * from $tableRules
+    left join $tableCategories
+    on $tableRules.$rulesColumnCategoryId=$tableCategories.$categoriesColumnId
+    where $rulesColumnId = $ruleId}
+    ''');
+    if (maps.isNotEmpty) {
+      return Rule(
+          id: maps.first[rulesColumnId],
+          category: Category.fromMap(maps.first),
+          priority: maps.first[rulesColumnPriority]);
+    }
+    return null;
+  }
+
+  Future<Iterable<Rule>> getRules() async {
+    List<Map<String, dynamic>> maps = await db.rawQuery('''
+    select * from $tableRules
+    left join $tableCategories
+    on $tableRules.$rulesColumnCategoryId=$tableCategories.$categoriesColumnId
+    ''');
+    return maps.map((e) => Rule(
+        id: e[rulesColumnId],
+        category: Category.fromMap(e),
+        priority: e[rulesColumnPriority]));
+  }
+
+  Future<Rulesegment> insertRulesegment(Rulesegment rulesegment) async {
+    rulesegment.id =
+        await db.insert(tableRulesegments, rulesegment.toUnidentifiedMap());
+    return rulesegment;
+  }
+
+  Future<Rulesegment> updateRulesegment(Rulesegment rulesegment) async {
+    await db.update(tableRulesegments, rulesegment.toMap(),
+        where: '$rulesegmentsColumnId = ?', whereArgs: [rulesegment.id]);
+    return rulesegment;
+  }
+
+  Future<Rulesegment> deleteRulesegment(Rulesegment rulesegment) async {
+    await db.delete(tableRulesegments,
+        where: '$rulesegmentsColumnId = ?', whereArgs: [rulesegment.id]);
+    return rulesegment;
+  }
+
+  Future<Iterable<Rulesegment>> getRulesegmentsForRule(Rule rule) async {
+    var maps = await db.query(tableRulesegments,
+        where: '$rulesegmentsColumnRuleId = ?', whereArgs: [rule.id]);
+    return maps.map((Map<String, dynamic> e) => Rulesegment(
+        id: e[rulesegmentsColumnId],
+        rule: rule,
+        param: e[rulesegmentsColumnParam],
+        regex: RegExp(e[rulesegmentsColumnRegex])));
   }
 
   Future<Iterable<SurfacedTransaction>> getSurfacedTransactionsForTransaction(
@@ -159,7 +283,8 @@ class DbClient {
       surfacedTransactions.add(SurfacedTransaction(
           id: e[surfacedTransactionsColumnId],
           realTransaction: transaction,
-          budget: await getBudgetById(e[surfacedTransactionsColumnBudgetId]),
+          category:
+              (await getCategoryById(e[surfacedTransactionsColumnCategoryId]))!,
           percentOfRealAmount: e[surfacedTransactionsColumnPercentOfRealAmount],
           name: e[surfacedTransactionsColumnName]));
     }
@@ -173,8 +298,8 @@ class DbClient {
 
     List<Map<String, dynamic>> maps = await db.rawQuery('''
     select * from $tableSurfacedTransactions
-    left join $tableBudgets
-    on $tableSurfacedTransactions.$surfacedTransactionsColumnBudgetId=$tableBudgets.$budgetsColumnId
+    left join $tableCategories
+    on $tableSurfacedTransactions.$surfacedTransactionsColumnCategoryId=$tableCategories.$categoriesColumnId
     inner join $tableTransactions
     on $tableSurfacedTransactions.$surfacedTransactionsColumnRealTransactionId=$tableTransactions.$transactionsColumnTransactionId
     where $transactionsColumnDate >= $startInt and $transactionsColumnDate <= $endInt
@@ -184,7 +309,7 @@ class DbClient {
         (Map<String, dynamic> map) => SurfacedTransaction(
             id: map[surfacedTransactionsColumnId],
             realTransaction: Transaction.fromMap(map),
-            budget: map[budgetsColumnId] == null ? null : Budget.fromMap(map),
+            category: Category.fromMap(map),
             percentOfRealAmount:
                 map[surfacedTransactionsColumnPercentOfRealAmount],
             name: map[surfacedTransactionsColumnName]));
@@ -192,24 +317,24 @@ class DbClient {
   }
 
   Future<Iterable<SurfacedTransaction>>
-      getSurfacedTransactionsInBudgetInDateRange(
-          Budget budget, DateTime startDate, DateTime endDate) async {
+      getSurfacedTransactionsInCategoryInDateRange(
+          Category category, DateTime startDate, DateTime endDate) async {
     num startInt = Transaction.dateToNum(startDate);
     num endInt = Transaction.dateToNum(endDate);
 
     List<Map<String, dynamic>> matchingSurfacedTransactionMaps =
         await db.rawQuery('''
     select * from $tableSurfacedTransactions
-    left join $tableBudgets
-    on $tableSurfacedTransactions.$surfacedTransactionsColumnBudgetId=$tableBudgets.$budgetsColumnId
+    left join $tableCategories
+    on $tableSurfacedTransactions.$surfacedTransactionsColumnCategoryId=$tableCategories.$categoriesColumnId
     inner join $tableTransactions
     on $tableSurfacedTransactions.$surfacedTransactionsColumnRealTransactionId=$tableTransactions.$transactionsColumnTransactionId
-    where $surfacedTransactionsColumnBudgetId = ${budget.id} and $transactionsColumnDate >= $startInt and $transactionsColumnDate <= $endInt
+    where $surfacedTransactionsColumnCategoryId = ${category.id} and $transactionsColumnDate >= $startInt and $transactionsColumnDate <= $endInt
     ''');
     return matchingSurfacedTransactionMaps.map((map) => SurfacedTransaction(
         id: map[surfacedTransactionsColumnId],
         realTransaction: Transaction.fromMap(map),
-        budget: map[budgetsColumnId] == null ? null : Budget.fromMap(map),
+        category: Category.fromMap(map),
         percentOfRealAmount: map[surfacedTransactionsColumnPercentOfRealAmount],
         name: map[surfacedTransactionsColumnName]));
   }

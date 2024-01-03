@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../backend/types.dart';
@@ -11,75 +13,136 @@ class SpendCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Map<int, num> budgetSpends = <int, num>{};
     Map<int, num> budgetPercents = <int, num>{};
-    for (Budget budget in budgets) {
-      budgetSpends[budget.id] = 0;
-    }
+    Map<int, int> budgetIdToCategoryId = <int, int>{};
+
+    Map<int, num> categorySpends = <int, num>{};
     for (SurfacedTransaction transaction in transactions) {
-      if (transaction.budget == null) {
-        // Skip uncategorized transactions
-        continue;
+      if (categorySpends[transaction.category.id] == null) {
+        categorySpends[transaction.category.id] = 0;
       }
-      budgetSpends[transaction.budget!.id] =
-          budgetSpends[transaction.budget!.id]! + transaction.getAmount();
+      categorySpends[transaction.category.id] =
+          categorySpends[transaction.category.id]! + transaction.getAmount();
     }
-    print(budgetSpends);
+
+    Map<CategoryType, List<int>> categoryTypeBudgets =
+        <CategoryType, List<int>>{};
     for (Budget budget in budgets) {
-      print(budget);
-      num spend = budgetSpends[budget.id]! / budget.limit;
-      if (spend.isInfinite || spend.isNaN) {
+      if (categoryTypeBudgets[budget.category.type] == null) {
+        categoryTypeBudgets[budget.category.type] = [budget.id];
+      } else {
+        categoryTypeBudgets[budget.category.type]!.add(budget.id);
+      }
+
+      if (categorySpends.containsKey(budget.category.id)) {
+        budgetPercents[budget.id] =
+            max(1.0, categorySpends[budget.category.id]! / budget.limit);
+      } else {
         budgetPercents[budget.id] = 0;
-      } else {
-        budgetPercents[budget.id] = spend;
       }
+
+      budgetIdToCategoryId[budget.id] = budget.category.id;
     }
 
-    Map<BudgetType, num> budgetTypeLimits = <BudgetType, num>{};
-    Map<BudgetType, num> budgetTypeSpends = <BudgetType, num>{};
-    Map<BudgetType, num> budgetTypePercents = <BudgetType, num>{};
-    for (BudgetType budgetType in BudgetType.values) {
-      budgetTypeSpends[budgetType] = 0;
-      budgetTypeLimits[budgetType] = 0;
-    }
-    for (int budgetId in budgetSpends.keys) {
-      Budget budget = budgets.firstWhere((element) => element.id == budgetId);
-      budgetTypeLimits[budget.type] =
-          budgetTypeLimits[budget.type]! + budget.limit;
-      budgetTypeSpends[budget.type] =
-          budgetTypeSpends[budget.type]! + budgetSpends[budget.id]!;
-    }
-    for (BudgetType budgetType in BudgetType.values) {
-      num percent =
-          budgetTypeSpends[budgetType]! / budgetTypeLimits[budgetType]!;
-      if (percent.isInfinite || percent.isNaN) {
-        budgetTypePercents[budgetType] = 1.0;
-      } else {
-        budgetTypePercents[budgetType] = percent;
-      }
+    for (CategoryType categoryType in CategoryType.values) {
+      categoryTypeBudgets[categoryType]!.sort((a, b) =>
+          categorySpends[budgetIdToCategoryId[b]]!
+              .compareTo(budgetIdToCategoryId[a]!));
     }
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-      child: Padding(
-        padding: const EdgeInsets.only(top: 12, bottom: 12),
-        child: Column(
-          children: [
-            ListTile(
-              leading: CircularProgressIndicator(
-                value: budgetTypePercents[BudgetType.spending]!.toDouble(),
-              ),
-              title: Text("Spending"),
+    return Theme(
+        data: Theme.of(context).copyWith(
+            progressIndicatorTheme: ProgressIndicatorThemeData(
+                color: Theme.of(context).colorScheme.primary,
+                circularTrackColor: Theme.of(context).colorScheme.background)),
+        child: Card(
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 16, bottom: 8, top: 8),
+                  child: Text("Spending",
+                      textAlign: TextAlign.left,
+                      style: Theme.of(context).textTheme.titleLarge),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 0),
+                  child: Column(
+                    children:
+                        categoryTypeBudgets[CategoryType.spending]!.map((e) {
+                      Budget budget =
+                          budgets.firstWhere((element) => element.id == e);
+                      return ListTile(
+                        leading: CircularProgressIndicator(
+                          value: budgetPercents[e]!.toDouble(),
+                        ),
+                        title: Text(budget.category.name),
+                        subtitle: Text(
+                            '\$${(budget.limit - categorySpends[budget.category.id]!).toStringAsFixed(2)} left'),
+                        trailing: Text(
+                            '\$${categorySpends[budget.category.id]!.toStringAsFixed(2)}'),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 16, bottom: 8, top: 8),
+                  child: Text("Living",
+                      textAlign: TextAlign.left,
+                      style: Theme.of(context).textTheme.titleLarge),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 0),
+                  child: Column(
+                    children:
+                        categoryTypeBudgets[CategoryType.living]!.map((e) {
+                      Budget budget =
+                          budgets.firstWhere((element) => element.id == e);
+                      return ListTile(
+                        leading: CircularProgressIndicator(
+                          value: budgetPercents[e]!.toDouble(),
+                        ),
+                        title: Text(budget.category.name),
+                        subtitle: Text(
+                            '\$${(budget.limit - categorySpends[budget.category.id]!).toStringAsFixed(2)} left'),
+                        trailing: Text(
+                            '\$${categorySpends[budget.category.id]!.toStringAsFixed(2)}'),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 16, bottom: 8, top: 8),
+                  child: Text("Income",
+                      textAlign: TextAlign.left,
+                      style: Theme.of(context).textTheme.titleLarge),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 0),
+                  child: Column(
+                    children:
+                        categoryTypeBudgets[CategoryType.income]!.map((e) {
+                      Budget budget =
+                          budgets.firstWhere((element) => element.id == e);
+                      return ListTile(
+                        leading: CircularProgressIndicator(
+                          value: budgetPercents[e]!.toDouble(),
+                        ),
+                        title: Text(budget.category.name),
+                        subtitle: Text(
+                            '\$${(budget.limit - categorySpends[budget.category.id]!).toStringAsFixed(2)} left'),
+                        trailing: Text(
+                            '\$${categorySpends[budget.category.id]!.toStringAsFixed(2)}'),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
             ),
-            ListTile(
-              leading: CircularProgressIndicator(
-                value: budgetTypePercents[BudgetType.living]!.toDouble(),
-              ),
-              title: Text("Living"),
-            ),
-          ],
-        ),
-      ),
-    );
+          ),
+        ));
   }
 }

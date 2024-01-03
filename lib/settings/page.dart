@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pfm/backend/controller.dart';
 import 'package:pfm/backend/types.dart';
-import 'package:pfm/editors/budgeteditor.dart';
+import 'package:pfm/editors/categoryeditor.dart';
 import 'package:pfm/widgets/budget.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -189,17 +189,17 @@ class _SettingsPageState extends State<SettingsPage> {
                           //style: Theme.of(context).textTheme.titleLarge),,
                           trailing: TextButton(
                             onPressed: () async {
-                              Budget? newBudget = await Navigator.push(
+                              Category? newBudget = await Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => BudgetPage(
+                                      builder: (context) => CategoryPage(
                                             backendController:
                                                 widget.backendController,
-                                            budget: null,
+                                            category: null,
                                           )));
                               if (newBudget != null) {
                                 widget.backendController
-                                    .upsertBudget(newBudget);
+                                    .upsertCategory(newBudget);
                               }
                               _refreshIndicatorKey.currentState?.show();
                             },

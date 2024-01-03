@@ -24,7 +24,7 @@ class BackendController {
     await dbClient.insertSurfacedTransaction(SurfacedTransaction(
         id: -1,
         realTransaction: transaction,
-        budget: null,
+        category: null,
         percentOfRealAmount: 100,
         name: transaction.merchantName ?? transaction.name));
   }
@@ -108,6 +108,38 @@ class BackendController {
     return getSettings();
   }
 
+  Future<Category> upsertCategory(Category category) async {
+    Category? existingBudget = await dbClient.getCategoryById(category.id);
+    if (existingBudget == null) {
+      // Insert
+      return await dbClient.insertCategory(category);
+    } else {
+      // Update
+      return await dbClient.updateCategory(category);
+    }
+  }
+
+  Future<Iterable<Category>> getCategories() async {
+    return await dbClient.getCategories();
+  }
+
+  Future deleteCategory(Category category) async {
+    // Remove category from all surfaced transactions in the category to be deleted
+    Iterable<SurfacedTransaction> allBudgetTransactions =
+        await dbClient.getSurfacedTransactionsInCategoryInDateRange(
+            category,
+            DateTime.fromMillisecondsSinceEpoch(0),
+            DateTime.now().add(const Duration(days: 1)));
+
+    for (SurfacedTransaction budgetTransaction in allBudgetTransactions) {
+      budgetTransaction.category = null;
+      await dbClient.updateSurfacedTransaction(budgetTransaction);
+    }
+
+    // Remove category itself
+    await dbClient.deleteCategory(category);
+  }
+
   Future<Budget> upsertBudget(Budget budget) async {
     Budget? existingBudget = await dbClient.getBudgetById(budget.id);
     if (existingBudget == null) {
@@ -124,19 +156,40 @@ class BackendController {
   }
 
   Future deleteBudget(Budget budget) async {
-    // Remove budget from all surfaced transactions in the budget to be deleted
-    Iterable<SurfacedTransaction> allBudgetTransactions =
-        await dbClient.getSurfacedTransactionsInBudgetInDateRange(
-            budget,
-            DateTime.fromMillisecondsSinceEpoch(0),
-            DateTime.now().add(const Duration(days: 1)));
+    await dbClient.deleteBudget(budget);
+  }
 
-    for (SurfacedTransaction budgetTransaction in allBudgetTransactions) {
-      budgetTransaction.budget = null;
-      await dbClient.updateSurfacedTransaction(budgetTransaction);
+  Future<RuleWithSegments> upsertRuleWithSegments(
+      RuleWithSegments ruleWithSegments) async {
+    Rule? existingRule = await dbClient.getRuleById(ruleWithSegments.rule.id);
+    if (existingRule == null) {
+      // Need to insert rule
+      await dbClient.insertRule(ruleWithSegments.rule);
+    } else {
+      // Rule already exists
+      await dbClient.updateRule(ruleWithSegments.rule);
     }
 
-    // Remove budget itself
-    await dbClient.deleteBudget(budget);
+    var existingSegments =
+        await dbClient.getRulesegmentsForRule(ruleWithSegments.rule);
+
+    // Check each of the segments to see if it exists already
+    for (Rulesegment segment in ruleWithSegments.segments) {
+      var found = false;
+      for (var existingSegment in existingSegments) {
+        if (segment.id == existingSegment.id) {
+          // Already exists
+          await dbClient.updateRulesegment(segment);
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        // Need to insert
+        await dbClient.insertRulesegment(segment);
+      }
+    }
+
+    return ruleWithSegments;
   }
 }
