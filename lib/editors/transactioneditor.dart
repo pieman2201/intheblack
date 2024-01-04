@@ -68,6 +68,14 @@ class _TransactionPageState extends State<TransactionPage> {
                 ),
                 Text(transaction.realTransaction.name),
                 Text(transaction.realTransaction.merchantName.toString()),
+                const SizedBox(
+                  height: 8,
+                ),
+                const Divider(),
+                const SizedBox(
+                  height: 8,
+                ),
+                Text(transaction.realTransaction.toMap().toString()),
               ],
             ),
           )),

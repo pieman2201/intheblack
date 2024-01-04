@@ -96,7 +96,7 @@ class _MonthSpendingPageState extends State<MonthSpendingPage> {
                   transaction: _transactions[_transactions.length - index - 1]);
             },
             separatorBuilder: (BuildContext context, int index) {
-              return const Divider();
+              return const Divider(height: 0,);
             },
           ),
         ],

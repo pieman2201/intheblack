@@ -58,7 +58,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
           children: [
             Card(
                 child: Padding(
-                    padding: EdgeInsets.only(bottom: _budgets.isEmpty ? 0 : 12),
+                    padding: EdgeInsets.only(bottom: _categories.isEmpty ? 0 : 12),
                     child: Column(
                       children: [
                         ListTile(
@@ -124,7 +124,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
                     ))),
             Card(
                 child: Padding(
-                    padding: EdgeInsets.only(bottom: _budgets.isEmpty ? 0 : 12),
+                    padding: EdgeInsets.only(bottom: _rules.isEmpty ? 0 : 12),
                     child: Column(
                       children: [
                         ListTile(

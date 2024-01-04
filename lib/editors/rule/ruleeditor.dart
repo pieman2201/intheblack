@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:pfm/backend/controller.dart';
 
@@ -52,15 +54,33 @@ class _RulePageState extends State<RulePage> {
               List<Category> categories = snapshot.data!.toList();
               return ListView(
                 children: [
+                  Row(
+                    children: [
+                      IconButton(
+                          onPressed: () {
+                            setState(() {
+                              _rule.priority = max(0, _rule.priority - 1);
+                            });
+                          },
+                          icon: const Icon(Icons.remove)),
+                      Expanded(child: Text('${_rule.priority}')),
+                      IconButton(
+                          onPressed: () {
+                            setState(() {
+                              _rule.priority++;
+                            });
+                          },
+                          icon: const Icon(Icons.add))
+                    ],
+                  ),
                   ...(categories.map((e) => RadioListTile<int>(
                         value: e.id,
                         groupValue: _rule.category.id,
                         title: Text(e.name),
                         subtitle: Text(
                             e.type.toString().split('.').last.toUpperCase()),
-                        secondary: CircleAvatar(
-                            child: Icon(
-                                IconData(e.icon, fontFamily: 'MaterialIcons'))),
+                        secondary: Icon(
+                                IconData(e.icon, fontFamily: 'MaterialIcons')),
                         onChanged: (int? value) {
                           if (value != null) {
                             Category category = categories
@@ -69,6 +89,7 @@ class _RulePageState extends State<RulePage> {
                             setState(() {});
                           }
                         },
+                        dense: true,
                       ))),
                   ...(() {
                     List<Widget> wList = [];

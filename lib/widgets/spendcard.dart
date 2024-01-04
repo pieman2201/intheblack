@@ -17,6 +17,9 @@ class SpendCard extends StatelessWidget {
     Map<int, int> budgetIdToCategoryId = <int, int>{};
 
     Map<int, num> categorySpends = <int, num>{};
+    for (Budget budget in budgets) {
+      categorySpends[budget.category.id] = 0;
+    }
     for (SurfacedTransaction transaction in transactions) {
       if (categorySpends[transaction.category.id] == null) {
         categorySpends[transaction.category.id] = 0;
@@ -128,13 +131,18 @@ class SpendCard extends StatelessWidget {
                           budgets.firstWhere((element) => element.id == e);
                       return ListTile(
                         leading: CircularProgressIndicator(
-                          value: budgetPercents[e]!.toDouble(),
+                          value: min(
+                              1.0,
+                              categorySpends[budget.category.id]!.abs() /
+                                  budget.limit),
                         ),
                         title: Text(budget.category.name),
-                        subtitle: Text(
-                            '\$${(budget.limit - categorySpends[budget.category.id]!).toStringAsFixed(2)} left'),
+                        subtitle: Text(budget.limit >
+                                (categorySpends[budget.category.id]!).abs()
+                            ? '\$${(budget.limit + categorySpends[budget.category.id]!).toStringAsFixed(2)} expected'
+                            : '\$${(budget.limit + categorySpends[budget.category.id]!).abs().toStringAsFixed(2)} extra'),
                         trailing: Text(
-                            '\$${categorySpends[budget.category.id]!.toStringAsFixed(2)}'),
+                            '\$${categorySpends[budget.category.id]!.abs().toStringAsFixed(2)}'),
                       );
                     }).toList(),
                   ),

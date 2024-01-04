@@ -32,6 +32,24 @@ class BackendController {
 
   Future insertTransactionAndSurface(Transaction transaction) async {
     await dbClient.insertTransaction(transaction);
+    if (transaction.pendingTransactionId != null && !transaction.pending) {
+      // Find and transfer associated pending SurfacedTransactions
+      Transaction? pendingTransaction = await dbClient
+          .getTransactionByTransactionId(transaction.pendingTransactionId!);
+      if (pendingTransaction != null && pendingTransaction.pending) {
+        // Found pending transaction
+        Iterable<SurfacedTransaction> pendingSurfacedTransactions =
+            await dbClient
+                .getSurfacedTransactionsForTransaction(pendingTransaction);
+        for (SurfacedTransaction pendingSurfacedTransaction
+            in pendingSurfacedTransactions) {
+          pendingSurfacedTransaction.realTransaction = transaction;
+          await dbClient.updateSurfacedTransaction(pendingSurfacedTransaction);
+        }
+
+        return; // Don't add new SurfacedTransaction for this
+      }
+    }
     await dbClient.insertSurfacedTransaction(SurfacedTransaction(
         id: -1,
         realTransaction: transaction,

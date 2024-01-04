@@ -141,7 +141,6 @@ class Transaction {
             // Attempt to source from counterparty if missing in main body
             for (dynamic counterparty in json['counterparties']) {
               var counterpartyMap = counterparty as Map<String, dynamic>;
-              print(counterpartyMap);
               if (counterpartyMap['logo_url'] != null &&
                   counterpartyMap['name'] != null &&
                   counterpartyMap['type'] == 'merchant') {
