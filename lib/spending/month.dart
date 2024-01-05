@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pfm/backend/controller.dart';
-import 'package:pfm/widgets/spendcard.dart';
+import 'package:pfm/widgets/spendcard/spendcard.dart';
 import 'package:pfm/widgets/spendchart.dart';
 
 import '../backend/types.dart';

@@ -38,7 +38,7 @@ class _BudgetPageState extends State<BudgetPage> {
       appBar: AppBar(
         title: const Text("Configure budget"),
       ),
-      body: Column(
+      body: ListView(
         children: [
           Padding(
             padding: const EdgeInsets.all(16),

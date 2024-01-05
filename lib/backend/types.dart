@@ -177,6 +177,13 @@ class Category {
   CategoryType type;
   int icon;
 
+  @override
+  bool operator ==(Object other) =>
+      other is Category && other.runtimeType == runtimeType && other.id == id;
+
+  @override
+  int get hashCode => id.hashCode;
+
   Map<String, dynamic> toMap() {
     var map = <String, dynamic>{
       categoriesColumnId: id,
@@ -286,7 +293,7 @@ class RuleWithSegments {
     Map<String, dynamic> transactionMap = transaction.toMap();
     for (var segment in segments) {
       String paramValue = transactionMap['transactions_${segment.param}'];
-      if (!segment.regex.hasMatch(paramValue)){
+      if (!segment.regex.hasMatch(paramValue)) {
         return false;
       }
     }
@@ -304,6 +311,20 @@ class Budget {
   int id;
   Category category;
   num limit;
+
+  @override
+  bool operator ==(Object other) =>
+      other is Budget && other.runtimeType == runtimeType && other.id == id;
+
+  @override
+  int get hashCode => id.hashCode;
+
+  num get effectiveLimit {
+    if (category.type == CategoryType.income) {
+      return -limit;
+    }
+    return limit;
+  }
 
   Budget({required this.id, required this.category, required this.limit});
 

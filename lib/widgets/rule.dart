@@ -59,7 +59,7 @@ class _RuleListItemState extends State<RuleListItem> {
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
-                title: const Text("Delete budget?"),
+                title: const Text("Delete rule?"),
                 actions: [
                   TextButton(
                       onPressed: () {
