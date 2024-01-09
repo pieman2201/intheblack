@@ -41,8 +41,8 @@ class _SegmentEditorItemState extends State<SegmentEditorItem> {
               border: OutlineInputBorder(),
               labelText: 'Param',
             ),
-            onEditingComplete: () {
-              widget.onEditedCallback(_paramEditingController.text,
+            onChanged: (String value) {
+              widget.onEditedCallback(value,
                   RegExp(_regexEditingController.text));
               setState(() {});
             },
@@ -56,9 +56,9 @@ class _SegmentEditorItemState extends State<SegmentEditorItem> {
             border: OutlineInputBorder(),
             labelText: 'Regex',
           ),
-          onEditingComplete: () {
+          onChanged: (String value) {
             widget.onEditedCallback(_paramEditingController.text,
-                RegExp(_regexEditingController.text));
+                RegExp(value));
             setState(() {});
           },
         ))

@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:pfm/widgets/spendcard/categorytypespend.dart';
 
@@ -39,8 +37,8 @@ class SpendCard extends StatelessWidget {
           categorySpends[b.category]!.compareTo(categorySpends[a.category]!));
     }
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8),
+    return Container(
+      //margin: const EdgeInsets.symmetric(horizontal: 8),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
@@ -51,16 +49,17 @@ class SpendCard extends StatelessWidget {
               budgets: categoryTypeBudgets[CategoryType.spending]!,
               categoryAmountSpentMap: categorySpends,
               formatAmount: (num amount) {
+                amount = amount.round();
                 if (amount < 0) {
-                  return '+\$${amount.abs().toStringAsFixed(2)}';
+                  return '+\$${amount.abs().toStringAsFixed(0)}';
                 }
-                return '\$${amount.toStringAsFixed(2)}';
+                return '\$${amount.toStringAsFixed(0)}';
               },
               formatRemainingAmount: (num amount) {
                 if (amount < 0) {
-                  return '\$${amount.abs().toStringAsFixed(2)} over';
+                  return '\$${amount.round().abs().toStringAsFixed(0)} over';
                 }
-                return '\$${amount.toStringAsFixed(2)} left';
+                return '\$${amount.round().toStringAsFixed(0)} left';
               },
               formatMiscAmount: (num amount) {
                 if (amount < 0) {
@@ -69,52 +68,54 @@ class SpendCard extends StatelessWidget {
                 return '\$${amount.toStringAsFixed(2)} extra';
               },
             ),
-            const Divider(),
+            //const Divider(),
             CategoryTypeSpend(
-                type: CategoryType.living,
-                budgets: categoryTypeBudgets[CategoryType.living]!,
-                categoryAmountSpentMap: categorySpends,
+              type: CategoryType.living,
+              budgets: categoryTypeBudgets[CategoryType.living]!,
+              categoryAmountSpentMap: categorySpends,
               formatAmount: (num amount) {
                 if (amount < 0) {
-                  return '+\$${amount.abs().toStringAsFixed(2)}';
+                  return '+\$${amount.abs().toStringAsFixed(0)}';
                 }
-                return '\$${amount.toStringAsFixed(2)}';
+                return '\$${amount.toStringAsFixed(0)}';
               },
               formatRemainingAmount: (num amount) {
                 if (amount < 0) {
-                  return '\$${amount.abs().toStringAsFixed(2)} over';
+                  return '\$${amount.abs().toStringAsFixed(0)} over';
                 }
-                return '\$${amount.toStringAsFixed(2)} left';
+                return '\$${amount.toStringAsFixed(0)} left';
               },
               formatMiscAmount: (num amount) {
                 if (amount < 0) {
                   return '\$${amount.abs().toStringAsFixed(2)} surplus';
                 }
                 return '\$${amount.toStringAsFixed(2)} extra';
-              },),
-            const Divider(),
+              },
+            ),
+            //const Divider(),
             CategoryTypeSpend(
-                type: CategoryType.income,
-                budgets: categoryTypeBudgets[CategoryType.income]!,
-                categoryAmountSpentMap: categorySpends,
+              type: CategoryType.income,
+              budgets: categoryTypeBudgets[CategoryType.income]!,
+              categoryAmountSpentMap: categorySpends,
               formatAmount: (num amount) {
                 if (amount <= 0) {
-                  return '\$${amount.abs().toStringAsFixed(2)}';
+                  return '\$${amount.abs().toStringAsFixed(0)}';
                 }
-                return '-\$${amount.toStringAsFixed(2)}';
+                return '-\$${amount.toStringAsFixed(0)}';
               },
               formatRemainingAmount: (num amount) {
                 if (amount < 0) {
-                  return '\$${amount.abs().toStringAsFixed(2)} expected';
+                  return '\$${amount.abs().toStringAsFixed(0)} expected';
                 }
-                return '\$${amount.toStringAsFixed(2)} extra';
+                return '\$${amount.toStringAsFixed(0)} extra';
               },
               formatMiscAmount: (num amount) {
                 if (amount <= 0) {
                   return '\$${amount.abs().toStringAsFixed(2)} surplus';
                 }
                 return '\$${amount.toStringAsFixed(2)} deficit';
-              },)
+              },
+            )
           ],
         ),
       ),

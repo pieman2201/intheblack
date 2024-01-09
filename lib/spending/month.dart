@@ -29,7 +29,9 @@ class _MonthSpendingPageState extends State<MonthSpendingPage> {
   Future _fetchAndShowTransactions() async {
     try {
       await widget.backendController.syncTransactionsAndStore();
-    } on Exception {
+    } on Exception catch (e, s) {
+      print(e);
+      print(s);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Could not sync transactions")));
@@ -75,8 +77,11 @@ class _MonthSpendingPageState extends State<MonthSpendingPage> {
       onRefresh: _fetchAndShowTransactions,
       child: CustomScrollView(
         slivers: [
-          SliverAppBar.large(
-              title: Text(DateFormat('MMMM y').format(widget.monthToShow))),
+          SliverAppBar.medium(
+            flexibleSpace: FlexibleSpaceBar(
+                titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+                title: Text(DateFormat('MMMM y').format(widget.monthToShow))),
+          ),
           SliverToBoxAdapter(
               child: _beginningOfCurrentMonth == null
                   ? const SizedBox.shrink()
@@ -96,7 +101,9 @@ class _MonthSpendingPageState extends State<MonthSpendingPage> {
                   transaction: _transactions[_transactions.length - index - 1]);
             },
             separatorBuilder: (BuildContext context, int index) {
-              return const Divider(height: 0,);
+              return const Divider(
+                height: 0,
+              );
             },
           ),
         ],

@@ -65,7 +65,7 @@ class SpendChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AspectRatio(
-        aspectRatio: 2,
+        aspectRatio: 3,
         child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 16),
             child: LineChart(

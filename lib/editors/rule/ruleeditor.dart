@@ -94,11 +94,13 @@ class _RulePageState extends State<RulePage> {
                   ...(() {
                     List<Widget> wList = [];
                     for (var i = 0; i < _segments.length; i++) {
+                      int index = i;
                       wList.add(SegmentEditorItem(
-                        segment: _segments[i],
+                        segment: _segments[index],
                         onEditedCallback: (String param, RegExp regex) {
-                          _segments[i].param = param;
-                          _segments[i].regex = regex;
+                          print(index);
+                          _segments[index].param = param;
+                          _segments[index].regex = regex;
                         },
                       ));
                     }
@@ -121,6 +123,8 @@ class _RulePageState extends State<RulePage> {
         onPressed: () async {
           RuleWithSegments ruleWithSegments =
               RuleWithSegments(rule: _rule, segments: _segments);
+          print(_rule.category.name);
+          print(_segments.map((e) => '${e.param} ${e.regex.pattern}').toList().toString());
           await widget.backendController
               .upsertRuleWithSegments(ruleWithSegments);
           if (context.mounted) {

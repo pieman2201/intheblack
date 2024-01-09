@@ -16,6 +16,7 @@ const String transactionsColumnDetailedCategory =
     'transactions_detailed_category';
 const String transactionsColumnCategoryIconUrl =
     'transactions_category_icon_url';
+const String transactionsColumnCategory = 'transactions_category';
 
 class Transaction {
   int id;
@@ -31,6 +32,7 @@ class Transaction {
   String primaryCategory;
   String detailedCategory;
   String categoryIconUrl;
+  String category;
 
   static num dateToNum(DateTime date) {
     return date.year * 10000 + date.month * 100 + date.day;
@@ -59,6 +61,7 @@ class Transaction {
       transactionsColumnPrimaryCategory: primaryCategory,
       transactionsColumnDetailedCategory: detailedCategory,
       transactionsColumnCategoryIconUrl: categoryIconUrl,
+      transactionsColumnCategory: category,
     };
     return map;
   }
@@ -83,6 +86,7 @@ class Transaction {
     required this.primaryCategory,
     required this.detailedCategory,
     required this.categoryIconUrl,
+    required this.category,
   });
 
   Transaction.fromMap(Map<String, dynamic> map)
@@ -100,7 +104,8 @@ class Transaction {
             : numToDate(map[transactionsColumnAuthorizedDate]!),
         primaryCategory = map[transactionsColumnPrimaryCategory]!,
         detailedCategory = map[transactionsColumnDetailedCategory]!,
-        categoryIconUrl = map[transactionsColumnCategoryIconUrl]!;
+        categoryIconUrl = map[transactionsColumnCategoryIconUrl]!,
+        category = map[transactionsColumnCategory].toString();
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
     return switch (json) {
@@ -119,6 +124,7 @@ class Transaction {
           'detailed': String detailedCategory,
         },
         'personal_finance_category_icon_url': String categoryIconUrl,
+        'category': dynamic category,
       } =>
         () {
           Transaction t = Transaction(
@@ -136,6 +142,7 @@ class Transaction {
             categoryIconUrl: categoryIconUrl,
             logoUrl: logoUrl,
             merchantName: merchantName,
+            category: category.toString(),
           );
           if (logoUrl == null || merchantName == null) {
             // Attempt to source from counterparty if missing in main body
@@ -152,6 +159,7 @@ class Transaction {
           return t;
         }(),
       _ => () {
+          print(json);
           throw const FormatException("Failed to load Transaction");
         }(),
     };
