@@ -80,9 +80,9 @@ class BackendController {
           await dbClient.updateTransaction(modifiedTransaction);
         }
       }
-      for (Transaction removedTransaction in tDiff.removed) {
-        Transaction? originalTransaction = await dbClient
-            .getTransactionByTransactionId(removedTransaction.transactionId);
+      for (String removedTransactionId in tDiff.removed) {
+        Transaction? originalTransaction =
+            await dbClient.getTransactionByTransactionId(removedTransactionId);
         if (originalTransaction != null) {
           // Remove surfaced transaction associated with the transaction
           Iterable<SurfacedTransaction> surfacedTransactions = await dbClient

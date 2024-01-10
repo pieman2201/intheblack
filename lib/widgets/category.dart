@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pfm/backend/controller.dart';
 import 'package:pfm/backend/types.dart';
-import 'package:pfm/editors/budgeteditor.dart';
 import 'package:pfm/editors/categoryeditor.dart';
 
 class CategoryListItem extends StatefulWidget {

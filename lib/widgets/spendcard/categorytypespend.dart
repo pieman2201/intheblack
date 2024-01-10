@@ -80,49 +80,23 @@ class _CategoryTypeSpendState extends State<CategoryTypeSpend> {
 
   List<Widget> reshapeUncategorizedCardList(List<Widget> uncategorizedWidgets,
       {Function? closeFunction}) {
-    List<Widget> budgetGroups = [];
+    List<List<Widget>> budgetGroups = [];
     List<Widget> currentGroup = [];
     for (Widget uncategorizedWidget in uncategorizedWidgets) {
-      Widget uncategorizedCard;
-      if (currentGroup.isEmpty) {
-        // top left
-        uncategorizedCard = Card(
-          margin: const EdgeInsets.only(right: 1, bottom: 1),
-          child: uncategorizedWidget,
-        );
-      } else if (currentGroup.length == 1) {
-        // top right
-        uncategorizedCard = Card(
-          margin: const EdgeInsets.only(left: 1, bottom: 1),
-          child: uncategorizedWidget,
-        );
-      } else if (currentGroup.length == 2) {
-        // bottom left
-        uncategorizedCard = Card(
-          margin: const EdgeInsets.only(right: 1, top: 1),
-          child: uncategorizedWidget,
-        );
-      } else {
-        // bottom right
-        uncategorizedCard = Card(
-          margin: const EdgeInsets.only(left: 1, top: 1),
-          child: uncategorizedWidget,
-        );
-      }
+      Widget uncategorizedCard = Card(
+        clipBehavior: Clip.hardEdge,
+        margin: EdgeInsets.zero,
+        child: uncategorizedWidget,
+      );
       currentGroup.add(uncategorizedCard);
       if (currentGroup.length == 4) {
-        budgetGroups.add(reshapeBudgetCardList(currentGroup.toList()));
+        budgetGroups.add(currentGroup.toList());
         currentGroup = [];
       }
     }
     if (currentGroup.isNotEmpty) {
       currentGroup.add(Card(
-        margin: switch (currentGroup.length) {
-          1 => EdgeInsets.only(left: 1, bottom: 1),
-          2 => EdgeInsets.only(right: 1, top: 1),
-          3 => EdgeInsets.only(left: 1, top: 1),
-          _ => EdgeInsets.zero
-        },
+        margin: EdgeInsets.zero,
         clipBehavior: Clip.hardEdge,
         child: InkWell(
           onTap: () {
@@ -130,38 +104,123 @@ class _CategoryTypeSpendState extends State<CategoryTypeSpend> {
               closeFunction();
             }
           },
-          child: Padding(
-            padding: const EdgeInsets.all(4),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.chevron_left),
-                Text("Hide"),
-              ],
+          child: const Padding(
+            padding: EdgeInsets.all(3),
+            child: Center(
+              child: Icon(Icons.chevron_left, size: 24),
             ),
           ),
         ),
       ));
-      while (currentGroup.length < 3) {
+      while (currentGroup.length < 4) {
         currentGroup.add(Card(
           elevation: 0,
-          margin: currentGroup.length == 1
-              ? const EdgeInsets.only(left: 1, bottom: 1)
-              : const EdgeInsets.only(right: 1, top: 1),
+          margin: EdgeInsets.zero,
           child: Padding(
-            padding: const EdgeInsets.all(4),
+            padding: const EdgeInsets.all(3),
             child: Icon(Icons.add,
                 color: Theme.of(context).colorScheme.background),
           ),
         ));
       }
-      budgetGroups.add(Container(
-          margin: EdgeInsets.symmetric(vertical: 3),
-          child: reshapeBudgetCardList(currentGroup)));
+      budgetGroups.add(currentGroup.toList());
     } else {
-      // add close button as a separate card
+      // Insert hide button as last widget in last group
+      budgetGroups.last.add(Card(
+        margin: EdgeInsets.zero,
+        clipBehavior: Clip.hardEdge,
+        child: InkWell(
+          onTap: () {
+            if (closeFunction != null) {
+              closeFunction();
+            }
+          },
+          child: const Padding(
+            padding: EdgeInsets.symmetric(vertical: 3),
+            child: Center(
+              child: Icon(Icons.chevron_left, size: 24),
+            ),
+          ),
+        ),
+      ));
     }
-    return budgetGroups;
+
+    List<Widget> budgetGroupWidgets = [];
+
+    // Format the budget groups as widgets
+    for (List<Widget> budgetGroup in budgetGroups) {
+      if (budgetGroup.length == 4) {
+        // A normal grid
+        budgetGroupWidgets.add(Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(children: [
+              Expanded(child: budgetGroup[0]),
+              const SizedBox(
+                width: 2,
+              ),
+              Expanded(child: budgetGroup[1]),
+            ]),
+            const SizedBox(
+              height: 2,
+            ),
+            Row(children: [
+              Expanded(child: budgetGroup[2]),
+              const SizedBox(
+                width: 2,
+              ),
+              Expanded(child: budgetGroup[3]),
+            ]),
+          ],
+        ));
+      } else if (budgetGroup.length == 5) {
+        // The one with the close button
+        budgetGroupWidgets.add(Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(children: [
+              Expanded(child: budgetGroup[0]),
+              const SizedBox(
+                width: 2,
+              ),
+              Expanded(child: budgetGroup[1]),
+            ]),
+            const SizedBox(
+              height: 2,
+            ),
+            Row(children: [
+              Expanded(child: budgetGroup[2]),
+              const SizedBox(
+                width: 2,
+              ),
+              Expanded(child: budgetGroup[3]),
+              const SizedBox(
+                width: 2,
+              ),
+              budgetGroup[4],
+            ]),
+          ],
+        ));
+      }
+    }
+
+    budgetGroupWidgets = budgetGroupWidgets
+        .map((e) => Card(
+              elevation: 0,
+              /*shape: RoundedRectangleBorder(
+                side: BorderSide(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+                borderRadius: const BorderRadius.all(Radius.circular(12)),
+              ),*/
+              child: SizedBox(
+                height: 48 + 8 + 8,
+                child: e,
+              ),
+            ))
+        .toList();
+
+    return budgetGroupWidgets;
   }
 
   @override
@@ -269,7 +328,8 @@ class _CategoryTypeSpendState extends State<CategoryTypeSpend> {
                   ? reshapeUncategorizedCardList(
                       unBudgetedCategories
                           .map((e) => Padding(
-                              padding: const EdgeInsets.all(4),
+                              padding: const EdgeInsets.only(
+                                  left: 6, top: 3, bottom: 3, right: 6),
                               child: Row(
                                 children: [
                                   Icon(
@@ -277,6 +337,7 @@ class _CategoryTypeSpendState extends State<CategoryTypeSpend> {
                                         fontFamily: 'MaterialIcons'),
                                     color:
                                         Theme.of(context).colorScheme.primary,
+                                    size: 24,
                                   ),
                                   const SizedBox(
                                     width: 4,

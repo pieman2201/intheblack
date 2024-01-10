@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pfm/backend/controller.dart';
 import 'package:pfm/backend/types.dart';
-import 'package:pfm/editors/budgeteditor.dart';
 import 'package:pfm/editors/rule/ruleeditor.dart';
 
 class RuleListItem extends StatefulWidget {

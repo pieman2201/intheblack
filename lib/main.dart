@@ -8,7 +8,7 @@ import 'package:pfm/spending/page.dart';
 final BackendController _backendController = BackendController();
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class DestinationPage {
@@ -37,7 +37,7 @@ class BackendDestinationPage extends DestinationPage {
 }
 
 class MyApp extends StatelessWidget {
-  MyApp({super.key});
+  const MyApp({super.key});
 
   // This widget is the root of your application.
   @override

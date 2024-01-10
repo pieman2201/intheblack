@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pfm/backend/controller.dart';
 import 'package:pfm/backend/types.dart';
-import 'package:pfm/editors/budgeteditor.dart';
-import 'package:pfm/editors/categoryeditor.dart';
-import 'package:pfm/widgets/budget.dart';
 
 class SettingsPage extends StatefulWidget {
   final BackendController backendController;
@@ -19,7 +16,6 @@ class _SettingsPageState extends State<SettingsPage> {
       GlobalKey<RefreshIndicatorState>();
 
   Map<String, String> _accessTokenCursors = <String, String>{};
-  Iterable<Budget> _budgets = [];
 
   late TextEditingController _editDialogTextController;
 
@@ -82,7 +78,6 @@ class _SettingsPageState extends State<SettingsPage> {
         _accessTokenCursors =
             await widget.backendController.getAccessTokenCursors();
         _settings = await widget.backendController.getSettings();
-        _budgets = await widget.backendController.getBudgets();
         setState(() {});
       },
       child: Theme(

@@ -407,7 +407,7 @@ const String cursorsColumnValue = 'cursors_value';
 class TransactionsDiff {
   Iterable<Transaction> added;
   Iterable<Transaction> modified;
-  Iterable<Transaction> removed;
+  Iterable<String> removed;
   String nextCursor;
 
   TransactionsDiff({
@@ -432,7 +432,7 @@ class TransactionsDiff {
             modified: modified
                 .map((e) => Transaction.fromJson(e as Map<String, dynamic>)),
             removed: removed
-                .map((e) => Transaction.fromJson(e as Map<String, dynamic>)),
+                .map((e) => (e as Map<String, dynamic>)['transaction_id']),
             nextCursor: nextCursor,
           );
         }(),
