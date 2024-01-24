@@ -5,23 +5,31 @@ import 'package:flutter/material.dart';
 
 import '../backend/types.dart';
 
-class SpendChart extends StatelessWidget {
+class SpendChart extends StatefulWidget {
   final DateTime startDate;
   final DateTime endDate;
   final List<SurfacedTransaction> transactions;
-
-  final Map<int, num> daySpendSum = <int, num>{};
-  final List<FlSpot> spendLineSpots = [];
-  late final List<FlSpot> projectedLineSpots = [];
 
   SpendChart(
       {super.key,
       required this.startDate,
       required this.endDate,
-      required this.transactions}) {
-    transactions.sort(
+      required this.transactions});
+
+  @override
+  State<SpendChart> createState() => _SpendChartState();
+}
+
+class _SpendChartState extends State<SpendChart> {
+  @override
+  Widget build(BuildContext context) {
+    Map<int, num> daySpendSum = <int, num>{};
+    List<FlSpot> spendLineSpots = [];
+    List<FlSpot> projectedLineSpots = [];
+
+    widget.transactions.sort(
         (a, b) => a.realTransaction.date.compareTo(b.realTransaction.date));
-    for (SurfacedTransaction transaction in transactions) {
+    for (SurfacedTransaction transaction in widget.transactions) {
       if (transaction.category.type == CategoryType.spending) {
         if (!daySpendSum.containsKey(transaction.realTransaction.date.day)) {
           daySpendSum[transaction.realTransaction.date.day] = 0;
@@ -35,9 +43,9 @@ class SpendChart extends StatelessWidget {
     spendLineSpots.add(const FlSpot(0, 0));
 
     int daysToCount = DateTime.fromMillisecondsSinceEpoch(min(
-            endDate.millisecondsSinceEpoch,
+            widget.endDate.millisecondsSinceEpoch,
             DateTime.now().millisecondsSinceEpoch))
-        .difference(startDate)
+        .difference(widget.startDate)
         .inDays;
 
     num iteratorSum = 0;
@@ -48,22 +56,19 @@ class SpendChart extends StatelessWidget {
       spendLineSpots.add(FlSpot(i.toDouble(), iteratorSum.toDouble()));
     }
     DateTime maxDate = DateTime.now();
-    if (maxDate.isBefore(endDate)) {
+    if (maxDate.isBefore(widget.endDate)) {
       num dailySpendRate = iteratorSum / (maxDate.day.toDouble() - 1);
       projectedLineSpots.addAll([
         FlSpot(maxDate.day.toDouble(), iteratorSum.toDouble()),
         FlSpot(
-            endDate.day.toDouble(),
+            widget.endDate.day.toDouble(),
             iteratorSum.toDouble() +
-                (dailySpendRate * (endDate.day - maxDate.day))),
+                (dailySpendRate * (widget.endDate.day - maxDate.day))),
       ]);
       print(projectedLineSpots);
     }
     print(spendLineSpots);
-  }
 
-  @override
-  Widget build(BuildContext context) {
     return AspectRatio(
         aspectRatio: 3,
         child: Padding(

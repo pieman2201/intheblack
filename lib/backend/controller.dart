@@ -66,8 +66,8 @@ class BackendController {
           accessToken, lNextCursorMap[accessToken]!);
     }
 
-    for (TransactionsDiff tDiff in tDiffs) {
-      for (Transaction addedTransaction in tDiff.added) {
+    for (TransactionsDiff tDiff in tDiffs.toList().reversed) {
+      for (Transaction addedTransaction in tDiff.added.toList().reversed) {
         await insertTransactionAndSurface(addedTransaction);
       }
       for (Transaction modifiedTransaction in tDiff.modified) {
@@ -83,6 +83,7 @@ class BackendController {
       for (String removedTransactionId in tDiff.removed) {
         Transaction? originalTransaction =
             await dbClient.getTransactionByTransactionId(removedTransactionId);
+        print(originalTransaction);
         if (originalTransaction != null) {
           // Remove surfaced transaction associated with the transaction
           Iterable<SurfacedTransaction> surfacedTransactions = await dbClient

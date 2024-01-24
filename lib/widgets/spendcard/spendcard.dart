@@ -3,7 +3,7 @@ import 'package:pfm/widgets/spendcard/categorytypespend.dart';
 
 import '../../backend/types.dart';
 
-class SpendCard extends StatelessWidget {
+class SpendCard extends StatefulWidget {
   final Iterable<Budget> budgets;
   final Iterable<SurfacedTransaction> transactions;
 
@@ -11,12 +11,17 @@ class SpendCard extends StatelessWidget {
       {super.key, required this.budgets, required this.transactions});
 
   @override
+  State<SpendCard> createState() => _SpendCardState();
+}
+
+class _SpendCardState extends State<SpendCard> {
+  @override
   Widget build(BuildContext context) {
     Map<Category, num> categorySpends = <Category, num>{};
-    for (Budget budget in budgets) {
+    for (Budget budget in widget.budgets) {
       categorySpends[budget.category] = 0;
     }
-    for (SurfacedTransaction transaction in transactions) {
+    for (SurfacedTransaction transaction in widget.transactions) {
       if (categorySpends[transaction.category] == null) {
         categorySpends[transaction.category] = 0;
       }
@@ -29,7 +34,7 @@ class SpendCard extends StatelessWidget {
     for (CategoryType categoryType in CategoryType.values) {
       categoryTypeBudgets[categoryType] = [];
     }
-    for (Budget budget in budgets) {
+    for (Budget budget in widget.budgets) {
       categoryTypeBudgets[budget.category.type]!.add(budget);
     }
     for (CategoryType categoryType in CategoryType.values) {

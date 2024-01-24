@@ -7,9 +7,13 @@ import 'package:pfm/editors/transactioneditor.dart';
 class TransactionListItem extends StatefulWidget {
   final BackendController backendController;
   final SurfacedTransaction transaction;
+  final Function onTransactionChangedCallback;
 
   const TransactionListItem(
-      {super.key, required this.backendController, required this.transaction});
+      {super.key,
+      required this.backendController,
+      required this.transaction,
+      required this.onTransactionChangedCallback});
 
   @override
   State<TransactionListItem> createState() => _TransactionListItemState();
@@ -29,7 +33,8 @@ class _TransactionListItemState extends State<TransactionListItem> {
   Widget build(BuildContext context) {
     return ListTile(
         leading: CircleAvatar(
-          child: Icon(IconData(_transaction.category.icon, fontFamily: 'MaterialIcons')),
+          child: Icon(IconData(_transaction.category.icon,
+              fontFamily: 'MaterialIcons')),
         ),
         title: Text(
           _transaction.name,
@@ -52,6 +57,7 @@ class _TransactionListItemState extends State<TransactionListItem> {
           setState(() {
             if (newTransaction != null) {
               _transaction = newTransaction;
+              widget.onTransactionChangedCallback();
             }
           });
         });

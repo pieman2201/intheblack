@@ -38,6 +38,10 @@ class _MonthSpendingPageState extends State<MonthSpendingPage> {
       }
     }
 
+    await _retrieveStoredData();
+  }
+
+  Future _retrieveStoredData() async {
     _beginningOfCurrentMonth =
         DateTime(widget.monthToShow.year, widget.monthToShow.month);
     int nextMonth = widget.monthToShow.month + 1;
@@ -97,8 +101,12 @@ class _MonthSpendingPageState extends State<MonthSpendingPage> {
             itemCount: _transactions.length,
             itemBuilder: (BuildContext context, int index) {
               return TransactionListItem(
-                  backendController: widget.backendController,
-                  transaction: _transactions[_transactions.length - index - 1]);
+                backendController: widget.backendController,
+                transaction: _transactions[_transactions.length - index - 1],
+                onTransactionChangedCallback: () {
+                  _retrieveStoredData();
+                },
+              );
             },
             separatorBuilder: (BuildContext context, int index) {
               return const Divider(

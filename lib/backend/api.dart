@@ -42,6 +42,9 @@ class ApiClient {
           newCursorMap[accessToken] = tDiff.nextCursor;
           diffs.add(tDiff);
         } else {
+          print(accessToken);
+          print(resp.statusCode);
+          print(resp.body);
           throw Exception("Failed to sync transactions");
         }
       }

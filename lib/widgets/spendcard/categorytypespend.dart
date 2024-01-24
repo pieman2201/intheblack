@@ -135,10 +135,14 @@ class _CategoryTypeSpendState extends State<CategoryTypeSpend> {
               closeFunction();
             }
           },
-          child: const Padding(
-            padding: EdgeInsets.symmetric(vertical: 3),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 3),
             child: Center(
-              child: Icon(Icons.chevron_left, size: 24),
+              child: Icon(
+                Icons.chevron_left,
+                size: 24,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         ),
@@ -205,8 +209,8 @@ class _CategoryTypeSpendState extends State<CategoryTypeSpend> {
     }
 
     budgetGroupWidgets = budgetGroupWidgets
-        .map((e) => Card(
-              elevation: 0,
+        .map((e) => Container(
+              margin: const EdgeInsets.all(4),
               /*shape: RoundedRectangleBorder(
                 side: BorderSide(
                   color: Theme.of(context).colorScheme.outline,
