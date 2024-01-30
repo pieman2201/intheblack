@@ -64,7 +64,7 @@ class MyApp extends StatelessWidget {
                 backendController: _backendController,
               ),
               navigationIcon: const NavigationDestination(
-                  icon: Icon(Icons.filter_list), label: "Filters")),
+                  icon: Icon(Icons.filter_list), label: "Categories")),
           DestinationPage(
               page: Container(),
               navigationIcon: const NavigationDestination(

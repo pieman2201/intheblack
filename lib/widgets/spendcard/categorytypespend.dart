@@ -104,10 +104,14 @@ class _CategoryTypeSpendState extends State<CategoryTypeSpend> {
               closeFunction();
             }
           },
-          child: const Padding(
-            padding: EdgeInsets.all(3),
+          child: Padding(
+            padding: const EdgeInsets.all(3),
             child: Center(
-              child: Icon(Icons.chevron_left, size: 24),
+              child: Icon(
+                Icons.chevron_left,
+                size: 24,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         ),
