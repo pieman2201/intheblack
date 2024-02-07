@@ -10,24 +10,14 @@ class SpendingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final PageController controller = PageController();
-    final DateTime currentTime = DateTime.now();
 
     return PageView.builder(
         controller: controller,
         reverse: true,
         itemBuilder: (BuildContext context, int index) {
-          int currentMonth = currentTime.month;
-          int currentYear = currentTime.year;
-
-          int monthToShowMonth = currentMonth - index;
-          int monthToShowYear = currentYear;
-          while (monthToShowMonth <= 0) {
-            monthToShowMonth += 12;
-            monthToShowYear--;
-          }
-          DateTime monthToShow = DateTime(monthToShowYear, monthToShowMonth);
           return MonthSpendingPage(
-              backendController: backendController, monthToShow: monthToShow);
+              backendController: backendController,
+              nthPreviousMonthToShow: index);
         });
   }
 }

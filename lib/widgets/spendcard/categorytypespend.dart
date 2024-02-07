@@ -1,6 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:pfm/backend/controller.dart';
+import 'package:pfm/configuration/categoryoverview.dart';
 import '../../backend/types.dart';
 
 class CategoryTypeSpend extends StatefulWidget {
@@ -10,6 +12,8 @@ class CategoryTypeSpend extends StatefulWidget {
   final String Function(num amount) formatAmount;
   final String Function(num amount) formatRemainingAmount;
   final String Function(num amount) formatMiscAmount;
+  final BackendController backendController;
+  final int nthPreviousMonth;
 
   const CategoryTypeSpend(
       {super.key,
@@ -18,7 +22,9 @@ class CategoryTypeSpend extends StatefulWidget {
       required this.categoryAmountSpentMap,
       required this.formatAmount,
       required this.formatRemainingAmount,
-      required this.formatMiscAmount});
+      required this.formatMiscAmount,
+      required this.backendController,
+      required this.nthPreviousMonth});
 
   @override
   State<StatefulWidget> createState() => _CategoryTypeSpendState();
@@ -31,6 +37,20 @@ class _CategoryTypeSpendState extends State<CategoryTypeSpend> {
   @override
   void initState() {
     super.initState();
+  }
+
+  void openCategoryOverview(Category category) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => CategoryOverview(
+                  backendController: widget.backendController,
+                  category: category,
+                  initialNthPreviousMonth: widget.nthPreviousMonth,
+                  formatAmount: widget.formatAmount,
+                  formatRemainingAmount: widget.formatRemainingAmount,
+                  formatMiscAmount: widget.formatMiscAmount,
+                )));
   }
 
   double getBudgetSpentDecimal(Budget budget, num amountSpent) {
@@ -78,16 +98,21 @@ class _CategoryTypeSpendState extends State<CategoryTypeSpend> {
     );
   }
 
-  List<Widget> reshapeUncategorizedCardList(List<Widget> uncategorizedWidgets,
+  List<Widget> reshapeUncategorizedCardList(
+      List<Widget> uncategorizedWidgets, List<Category> categories,
       {Function? closeFunction}) {
     List<List<Widget>> budgetGroups = [];
     List<Widget> currentGroup = [];
-    for (Widget uncategorizedWidget in uncategorizedWidgets) {
+    for (final (index, uncategorizedWidget) in uncategorizedWidgets.indexed) {
       Widget uncategorizedCard = Card(
-        clipBehavior: Clip.hardEdge,
-        margin: EdgeInsets.zero,
-        child: uncategorizedWidget,
-      );
+          clipBehavior: Clip.hardEdge,
+          margin: EdgeInsets.zero,
+          child: InkWell(
+            onTap: () {
+              openCategoryOverview(categories[index]);
+            },
+            child: uncategorizedWidget,
+          ));
       currentGroup.add(uncategorizedCard);
       if (currentGroup.length == 4) {
         budgetGroups.add(currentGroup.toList());
@@ -278,58 +303,65 @@ class _CategoryTypeSpendState extends State<CategoryTypeSpend> {
               ])),
           reshapeBudgetCardList(widget.budgets
                   .map((budget) => Card(
-                      child: Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Row(children: [
-                            Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                Text(
-                                    widget.formatAmount(
-                                        widget.categoryAmountSpentMap[
-                                            budget.category]!),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelSmall
-                                        ?.copyWith(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .primary)),
-                                SizedBox(
-                                  width: 48,
-                                  height: 48,
-                                  child: CircularProgressIndicator(
-                                    strokeAlign: BorderSide.strokeAlignInside,
-                                    strokeCap: StrokeCap.round,
-                                    value: getBudgetSpentDecimal(
-                                        budget,
-                                        widget.categoryAmountSpentMap[
-                                            budget.category]!),
-                                  ),
-                                )
-                              ],
-                            ),
-                            const SizedBox(
-                              width: 8,
-                            ),
-                            Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(budget.category.name,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleSmall),
-                                  Text(
-                                      widget.formatRemainingAmount(
-                                          (budget.effectiveLimit -
-                                              widget.categoryAmountSpentMap[
-                                                  budget.category]!)),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium),
-                                ]),
-                          ]))))
+                      clipBehavior: Clip.hardEdge,
+                      child: InkWell(
+                          onTap: () {
+                            openCategoryOverview(budget.category);
+                          },
+                          child: Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Row(children: [
+                                Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Text(
+                                        widget.formatAmount(
+                                            widget.categoryAmountSpentMap[
+                                                budget.category]!),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .primary)),
+                                    SizedBox(
+                                      width: 48,
+                                      height: 48,
+                                      child: CircularProgressIndicator(
+                                        strokeAlign:
+                                            BorderSide.strokeAlignInside,
+                                        strokeCap: StrokeCap.round,
+                                        value: getBudgetSpentDecimal(
+                                            budget,
+                                            widget.categoryAmountSpentMap[
+                                                budget.category]!),
+                                      ),
+                                    )
+                                  ],
+                                ),
+                                const SizedBox(
+                                  width: 8,
+                                ),
+                                Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(budget.category.name,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleSmall),
+                                      Text(
+                                          widget.formatRemainingAmount(
+                                              (budget.effectiveLimit -
+                                                  widget.categoryAmountSpentMap[
+                                                      budget.category]!)),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium),
+                                    ]),
+                              ])))))
                   .toList()
                   .cast<Widget>() +
               (unBudgetedCategories.isNotEmpty && _expanded
@@ -354,7 +386,8 @@ class _CategoryTypeSpendState extends State<CategoryTypeSpend> {
                                       widget.categoryAmountSpentMap[e]!))
                                 ],
                               )))
-                          .toList(), closeFunction: () {
+                          .toList(),
+                      unBudgetedCategories, closeFunction: () {
                       setState(() {
                         _expanded = false;
                       });

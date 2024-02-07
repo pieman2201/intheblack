@@ -9,10 +9,12 @@ import '../widgets/transaction.dart';
 
 class MonthSpendingPage extends StatefulWidget {
   final BackendController backendController;
-  final DateTime monthToShow;
+  final int nthPreviousMonthToShow;
 
   const MonthSpendingPage(
-      {super.key, required this.backendController, required this.monthToShow});
+      {super.key,
+      required this.backendController,
+      required this.nthPreviousMonthToShow});
 
   @override
   State<MonthSpendingPage> createState() => _MonthSpendingPageState();
@@ -42,26 +44,24 @@ class _MonthSpendingPageState extends State<MonthSpendingPage> {
   }
 
   Future _retrieveStoredData() async {
-    _beginningOfCurrentMonth =
-        DateTime(widget.monthToShow.year, widget.monthToShow.month);
-    int nextMonth = widget.monthToShow.month + 1;
-    int nextYear = widget.monthToShow.year;
-    if (nextMonth >= 13) {
-      nextMonth -= 12;
-      nextYear++;
-    }
-    DateTime beginningOfNextMonth = DateTime(nextYear, nextMonth);
-    _endOfCurrentMonth = beginningOfNextMonth.subtract(const Duration(days: 1));
-    var retrievedTransactions = await widget.backendController
+    _transactions = [];
+    _beginningOfCurrentMonth = null;
+    if (!mounted) return;
+    setState(() {});
+
+    var (monthStart, monthEnd) = widget.backendController.getMonthBounds(widget
+        .backendController
+        .getNthPreviousMonth(widget.nthPreviousMonthToShow));
+    _beginningOfCurrentMonth = monthStart;
+    _endOfCurrentMonth = monthEnd;
+    _transactions = await widget.backendController
         .getSurfacedTransactionsInDateRange(
             _beginningOfCurrentMonth!, _endOfCurrentMonth!);
 
     _budgets = await widget.backendController.getBudgets();
 
     if (!mounted) return;
-    setState(() {
-      _transactions = retrievedTransactions;
-    });
+    setState(() {});
   }
 
   @override
@@ -84,7 +84,8 @@ class _MonthSpendingPageState extends State<MonthSpendingPage> {
           SliverAppBar.medium(
             flexibleSpace: FlexibleSpaceBar(
                 titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
-                title: Text(DateFormat('MMMM y').format(widget.monthToShow))),
+                title: Text(DateFormat('MMMM y').format(widget.backendController
+                    .getNthPreviousMonth(widget.nthPreviousMonthToShow)))),
           ),
           SliverToBoxAdapter(
               child: _beginningOfCurrentMonth == null
@@ -96,15 +97,20 @@ class _MonthSpendingPageState extends State<MonthSpendingPage> {
           SliverToBoxAdapter(
               child: _transactions.isEmpty
                   ? const SizedBox.shrink()
-                  : SpendCard(budgets: _budgets, transactions: _transactions)),
+                  : SpendCard(
+                      budgets: _budgets,
+                      transactions: _transactions,
+                      backendController: widget.backendController,
+                      nthPreviousMonth: widget.nthPreviousMonthToShow,
+                    )),
           SliverList.separated(
             itemCount: _transactions.length,
             itemBuilder: (BuildContext context, int index) {
               return TransactionListItem(
                 backendController: widget.backendController,
                 transaction: _transactions[_transactions.length - index - 1],
-                onTransactionChangedCallback: () {
-                  _retrieveStoredData();
+                onTransactionChangedCallback: () async {
+                  await _retrieveStoredData();
                 },
               );
             },

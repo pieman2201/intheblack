@@ -36,76 +36,78 @@ class _CategoryPageState extends State<CategoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    List<Widget> items = [
+      TextField(
+        controller: _nameEditingController,
+        decoration: const InputDecoration(
+          border: OutlineInputBorder(),
+          labelText: 'Name',
+        ),
+      ),
+      SegmentedButton<CategoryType>(
+        segments: const [
+          ButtonSegment(
+              value: CategoryType.spending,
+              //label: Text('Spending'),
+              icon: Icon(Icons.show_chart)),
+          ButtonSegment(
+              value: CategoryType.living,
+              //label: Text('Living'),
+              icon: Icon(Icons.night_shelter_outlined)),
+          ButtonSegment(
+              value: CategoryType.income,
+              //label: Text('Income'),
+              icon: Icon(Icons.payments_outlined)),
+          ButtonSegment(
+              value: CategoryType.ignored,
+              //label: Text('Ignored'),
+              icon: Icon(Icons.visibility_off_outlined))
+        ],
+        selected: {_categoryType},
+        onSelectionChanged: (Set<CategoryType> newSelection) {
+          setState(() {
+            _categoryType = newSelection.first;
+          });
+        },
+      ),
+      Row(
+        children: [
+          Expanded(
+            child: TextField(
+              autocorrect: false,
+              controller: _iconEditingController,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Icon code',
+              ),
+              onEditingComplete: () {
+                setState(() {});
+              },
+            ),
+          ),
+          const SizedBox(
+            width: 8,
+          ),
+          CircleAvatar(
+              child: _iconEditingController.text.isEmpty
+                  ? const Icon(Icons.check_box_outline_blank)
+                  : Icon(IconData(int.parse(_iconEditingController.text),
+                  fontFamily: 'MaterialIcons')))
+        ],
+      ),
+    ];
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Configure category"),
       ),
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
-        itemBuilder: (BuildContext context, int index) => [
-          TextField(
-            controller: _nameEditingController,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: 'Name',
-            ),
-          ),
-          SegmentedButton<CategoryType>(
-            segments: const [
-              ButtonSegment(
-                  value: CategoryType.spending,
-                  //label: Text('Spending'),
-                  icon: Icon(Icons.show_chart)),
-              ButtonSegment(
-                  value: CategoryType.living,
-                  //label: Text('Living'),
-                  icon: Icon(Icons.night_shelter_outlined)),
-              ButtonSegment(
-                  value: CategoryType.income,
-                  //label: Text('Income'),
-                  icon: Icon(Icons.payments_outlined)),
-              ButtonSegment(
-                  value: CategoryType.ignored,
-                  //label: Text('Ignored'),
-                  icon: Icon(Icons.visibility_off_outlined))
-            ],
-            selected: {_categoryType},
-            onSelectionChanged: (Set<CategoryType> newSelection) {
-              setState(() {
-                _categoryType = newSelection.first;
-              });
-            },
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  autocorrect: false,
-                  controller: _iconEditingController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Icon code',
-                  ),
-                  onEditingComplete: () {
-                    setState(() {});
-                  },
-                ),
-              ),
-              const SizedBox(
-                width: 8,
-              ),
-              CircleAvatar(
-                  child: _iconEditingController.text.isEmpty
-                      ? const Icon(Icons.check_box_outline_blank)
-                      : Icon(IconData(int.parse(_iconEditingController.text),
-                          fontFamily: 'MaterialIcons')))
-            ],
-          ),
-        ][index],
+        itemBuilder: (BuildContext context, int index) => items[index],
         separatorBuilder: (BuildContext context, int index) => const SizedBox(
-          height: 8,
+          height: 16,
         ),
-        itemCount: 3,
+        itemCount: items.length,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {

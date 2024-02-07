@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:pfm/backend/controller.dart';
 import 'package:pfm/backend/types.dart';
+import 'package:pfm/configuration/categoryoverview.dart';
 import 'package:pfm/editors/categoryeditor.dart';
+import 'package:pfm/util.dart';
 
 class CategoryListItem extends StatefulWidget {
   final BackendController backendController;
@@ -40,9 +42,17 @@ class _CategoryListItemState extends State<CategoryListItem> {
         Category? newCategory = await Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => CategoryPage(
+                builder: (context) => CategoryOverview(
                       backendController: widget.backendController,
                       category: _category,
+                      initialNthPreviousMonth: 0,
+                      formatAmount:
+                          categoryTypeAmountFormatters[_category.type]!,
+                      formatRemainingAmount:
+                          categoryTypeRemainingAmountFormatters[
+                              _category.type]!,
+                      formatMiscAmount:
+                          categoryTypeMiscAmountFormatters[_category.type]!,
                     )));
         setState(() {
           if (newCategory != null) {

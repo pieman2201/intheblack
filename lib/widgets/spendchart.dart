@@ -57,7 +57,7 @@ class _SpendChartState extends State<SpendChart> {
     }
     DateTime maxDate = DateTime.now();
     if (maxDate.isBefore(widget.endDate)) {
-      num dailySpendRate = iteratorSum / (maxDate.day.toDouble() - 1);
+      num dailySpendRate = iteratorSum / maxDate.day.toDouble();
       projectedLineSpots.addAll([
         FlSpot(maxDate.day.toDouble(), iteratorSum.toDouble()),
         FlSpot(

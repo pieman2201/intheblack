@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pfm/backend/controller.dart';
+import 'package:pfm/util.dart';
 import 'package:pfm/widgets/spendcard/categorytypespend.dart';
 
 import '../../backend/types.dart';
@@ -6,9 +8,15 @@ import '../../backend/types.dart';
 class SpendCard extends StatefulWidget {
   final Iterable<Budget> budgets;
   final Iterable<SurfacedTransaction> transactions;
+  final BackendController backendController;
+  final int nthPreviousMonth;
 
   const SpendCard(
-      {super.key, required this.budgets, required this.transactions});
+      {super.key,
+      required this.budgets,
+      required this.transactions,
+      required this.backendController,
+      required this.nthPreviousMonth});
 
   @override
   State<SpendCard> createState() => _SpendCardState();
@@ -51,73 +59,33 @@ class _SpendCardState extends State<SpendCard> {
             type: CategoryType.spending,
             budgets: categoryTypeBudgets[CategoryType.spending]!,
             categoryAmountSpentMap: categorySpends,
-            formatAmount: (num amount) {
-              amount = amount.round();
-              if (amount < 0) {
-                return '+\$${amount.abs().toStringAsFixed(0)}';
-              }
-              return '\$${amount.toStringAsFixed(0)}';
-            },
-            formatRemainingAmount: (num amount) {
-              if (amount < 0) {
-                return '\$${amount.round().abs().toStringAsFixed(0)} over';
-              }
-              return '\$${amount.round().toStringAsFixed(0)} left';
-            },
-            formatMiscAmount: (num amount) {
-              if (amount < 0) {
-                return '\$${amount.abs().toStringAsFixed(2)} surplus';
-              }
-              return '\$${amount.toStringAsFixed(2)} extra';
-            },
+            formatAmount: categoryTypeAmountFormatters[CategoryType.spending]!,
+            formatRemainingAmount: categoryTypeRemainingAmountFormatters[CategoryType.spending]!,
+            formatMiscAmount: categoryTypeMiscAmountFormatters[CategoryType.spending]!,
+            backendController: widget.backendController,
+            nthPreviousMonth: widget.nthPreviousMonth,
           ),
           //const Divider(),
           CategoryTypeSpend(
             type: CategoryType.living,
             budgets: categoryTypeBudgets[CategoryType.living]!,
             categoryAmountSpentMap: categorySpends,
-            formatAmount: (num amount) {
-              if (amount < 0) {
-                return '+\$${amount.abs().toStringAsFixed(0)}';
-              }
-              return '\$${amount.toStringAsFixed(0)}';
-            },
-            formatRemainingAmount: (num amount) {
-              if (amount < 0) {
-                return '\$${amount.abs().toStringAsFixed(0)} over';
-              }
-              return '\$${amount.toStringAsFixed(0)} left';
-            },
-            formatMiscAmount: (num amount) {
-              if (amount < 0) {
-                return '\$${amount.abs().toStringAsFixed(2)} surplus';
-              }
-              return '\$${amount.toStringAsFixed(2)} extra';
-            },
+            formatAmount: categoryTypeAmountFormatters[CategoryType.living]!,
+            formatRemainingAmount: categoryTypeRemainingAmountFormatters[CategoryType.living]!,
+            formatMiscAmount: categoryTypeMiscAmountFormatters[CategoryType.living]!,
+            backendController: widget.backendController,
+            nthPreviousMonth: widget.nthPreviousMonth,
           ),
           //const Divider(),
           CategoryTypeSpend(
             type: CategoryType.income,
             budgets: categoryTypeBudgets[CategoryType.income]!,
             categoryAmountSpentMap: categorySpends,
-            formatAmount: (num amount) {
-              if (amount <= 0) {
-                return '\$${amount.abs().toStringAsFixed(0)}';
-              }
-              return '-\$${amount.toStringAsFixed(0)}';
-            },
-            formatRemainingAmount: (num amount) {
-              if (amount < 0) {
-                return '\$${amount.abs().toStringAsFixed(0)} expected';
-              }
-              return '\$${amount.toStringAsFixed(0)} extra';
-            },
-            formatMiscAmount: (num amount) {
-              if (amount <= 0) {
-                return '\$${amount.abs().toStringAsFixed(2)} surplus';
-              }
-              return '\$${amount.toStringAsFixed(2)} deficit';
-            },
+            formatAmount: categoryTypeAmountFormatters[CategoryType.income]!,
+            formatRemainingAmount: categoryTypeRemainingAmountFormatters[CategoryType.income]!,
+            formatMiscAmount: categoryTypeMiscAmountFormatters[CategoryType.income]!,
+            backendController: widget.backendController,
+            nthPreviousMonth: widget.nthPreviousMonth,
           )
         ],
       ),

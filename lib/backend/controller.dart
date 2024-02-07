@@ -30,6 +30,34 @@ class BackendController {
     );
   }
 
+  DateTime getNthPreviousMonth(int n) {
+    DateTime currentTime = DateTime.now();
+    int currentMonth = currentTime.month;
+    int currentYear = currentTime.year;
+
+    int monthToShowMonth = currentMonth - n;
+    int monthToShowYear = currentYear;
+    while (monthToShowMonth <= 0) {
+      monthToShowMonth += 12;
+      monthToShowYear--;
+    }
+    return DateTime(monthToShowYear, monthToShowMonth);
+  }
+
+  (DateTime, DateTime) getMonthBounds(DateTime month) {
+    DateTime beginningOfCurrentMonth =
+        DateTime(month.year, month.month);
+    int nextMonth = month.month + 1;
+    int nextYear = month.year;
+    if (nextMonth >= 13) {
+      nextMonth -= 12;
+      nextYear++;
+    }
+    DateTime beginningOfNextMonth = DateTime(nextYear, nextMonth);
+    DateTime endOfCurrentMonth = beginningOfNextMonth.subtract(const Duration(days: 1));
+    return (beginningOfCurrentMonth, endOfCurrentMonth);
+  }
+
   Future insertTransactionAndSurface(Transaction transaction) async {
     await dbClient.insertTransaction(transaction);
     if (transaction.pendingTransactionId != null && !transaction.pending) {
@@ -103,6 +131,19 @@ class BackendController {
       DateTime startDate, DateTime endDate) async {
     Iterable<SurfacedTransaction> matchingSurfacedTransactions =
         await dbClient.getSurfacedTransactionsInDateRange(startDate, endDate);
+    List<SurfacedTransaction> surfacedTransactionList =
+        matchingSurfacedTransactions.toList();
+    surfacedTransactionList.sort(
+        (b, a) => a.realTransaction.date.compareTo(b.realTransaction.date));
+    return surfacedTransactionList;
+  }
+
+  Future<List<SurfacedTransaction>>
+      getSurfacedTransactionsInCategoryInDateRange(
+          Category category, DateTime startDate, DateTime endDate) async {
+    Iterable<SurfacedTransaction> matchingSurfacedTransactions =
+        await dbClient.getSurfacedTransactionsInCategoryInDateRange(
+            category, startDate, endDate);
     List<SurfacedTransaction> surfacedTransactionList =
         matchingSurfacedTransactions.toList();
     surfacedTransactionList.sort(
