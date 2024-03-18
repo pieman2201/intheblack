@@ -332,10 +332,12 @@ class _CategoryTypeSpendState extends State<CategoryTypeSpend> {
                                         strokeAlign:
                                             BorderSide.strokeAlignInside,
                                         strokeCap: StrokeCap.round,
-                                        value: getBudgetSpentDecimal(
-                                            budget,
-                                            widget.categoryAmountSpentMap[
-                                                budget.category]!),
+                                        value: ((double x) =>
+                                                (x.isNaN ? 0.0 : x))(
+                                            getBudgetSpentDecimal(
+                                                budget,
+                                                widget.categoryAmountSpentMap[
+                                                    budget.category]!)),
                                       ),
                                     )
                                   ],

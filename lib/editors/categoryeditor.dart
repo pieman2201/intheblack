@@ -4,6 +4,7 @@ import 'package:pfm/editors/budgeteditor.dart';
 import 'package:pfm/editors/rule/ruleeditor.dart';
 import 'package:pfm/widgets/budget.dart';
 import 'package:pfm/widgets/rule.dart';
+import 'package:collection/collection.dart';
 
 import '../backend/types.dart';
 
@@ -33,8 +34,8 @@ class _CategoryPageState extends State<CategoryPage> {
     }
 
     var budgets = await widget.backendController.getBudgets();
-    _budget =
-        budgets.firstWhere((element) => element.category == widget.category);
+    _budget = budgets
+        .firstWhereOrNull((element) => element.category == widget.category);
 
     var rules = await widget.backendController.getRulesWithSegments();
     _rules = rules.where((element) => element.rule.category == widget.category);
@@ -58,74 +59,88 @@ class _CategoryPageState extends State<CategoryPage> {
 
       _loadCategoryData();
     }
-
   }
 
   @override
   Widget build(BuildContext context) {
     List<Widget> items = [
-      TextField(
-        controller: _nameEditingController,
-        decoration: const InputDecoration(
-          border: OutlineInputBorder(),
-          labelText: 'Name',
-        ),
-      ),
-      SegmentedButton<CategoryType>(
-        segments: const [
-          ButtonSegment(
-              value: CategoryType.spending,
-              //label: Text('Spending'),
-              icon: Icon(Icons.show_chart)),
-          ButtonSegment(
-              value: CategoryType.living,
-              //label: Text('Living'),
-              icon: Icon(Icons.night_shelter_outlined)),
-          ButtonSegment(
-              value: CategoryType.income,
-              //label: Text('Income'),
-              icon: Icon(Icons.payments_outlined)),
-          ButtonSegment(
-              value: CategoryType.ignored,
-              //label: Text('Ignored'),
-              icon: Icon(Icons.visibility_off_outlined))
-        ],
-        selected: {_categoryType},
-        onSelectionChanged: (Set<CategoryType> newSelection) {
-          setState(() {
-            _categoryType = newSelection.first;
-          });
-        },
-      ),
-      Row(
-        children: [
-          Expanded(
-            child: TextField(
-              autocorrect: false,
-              controller: _iconEditingController,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Icon code',
+      Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: [
+              TextField(
+                controller: _nameEditingController,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Name',
+                ),
               ),
-              onEditingComplete: () {
-                setState(() {});
-              },
-            ),
-          ),
-          const SizedBox(
-            width: 8,
-          ),
-          CircleAvatar(
-              child: _iconEditingController.text.isEmpty
-                  ? const Icon(Icons.check_box_outline_blank)
-                  : Icon(IconData(int.parse(_iconEditingController.text),
-                      fontFamily: 'MaterialIcons')))
-        ],
-      ),
+              const SizedBox(height: 16),
+              SegmentedButton<CategoryType>(
+                segments: const [
+                  ButtonSegment(
+                      value: CategoryType.spending,
+                      //label: Text('Spending'),
+                      icon: Icon(Icons.show_chart)),
+                  ButtonSegment(
+                      value: CategoryType.living,
+                      //label: Text('Living'),
+                      icon: Icon(Icons.night_shelter_outlined)),
+                  ButtonSegment(
+                      value: CategoryType.income,
+                      //label: Text('Income'),
+                      icon: Icon(Icons.payments_outlined)),
+                  ButtonSegment(
+                      value: CategoryType.ignored,
+                      //label: Text('Ignored'),
+                      icon: Icon(Icons.visibility_off_outlined))
+                ],
+                selected: {_categoryType},
+                onSelectionChanged: (Set<CategoryType> newSelection) {
+                  setState(() {
+                    _categoryType = newSelection.first;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      autocorrect: false,
+                      controller: _iconEditingController,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: 'Icon code',
+                      ),
+                      onEditingComplete: () {
+                        setState(() {});
+                      },
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 8,
+                  ),
+                  CircleAvatar(
+                      child: _iconEditingController.text.isEmpty
+                          ? const Icon(Icons.check_box_outline_blank)
+                          : Icon(IconData(
+                              int.parse(_iconEditingController.text),
+                              fontFamily: 'MaterialIcons')))
+                ],
+              ),
+            ],
+          )),
+      const SizedBox(height: 16),
     ];
 
     if (_budget != null) {
-      items.add(const Text("Budget"));
+      items.add(Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            "Budget",
+            style: Theme.of(context).textTheme.titleMedium,
+          )));
       items.add(BudgetListItem(
         backendController: widget.backendController,
         budget: _budget!,
@@ -138,14 +153,25 @@ class _CategoryPageState extends State<CategoryPage> {
                 MaterialPageRoute(
                     builder: (context) => BudgetPage(
                           backendController: widget.backendController,
-                          budget: null,
+                          budget: widget.category != null
+                              ? Budget(
+                                  id: -1,
+                                  category: widget.category!,
+                                  limit: 0,
+                                )
+                              : null,
                         )));
           },
           child: const Text("Add budget")));
     }
 
     if (_rules.isNotEmpty) {
-      items.add(const Text("Rules"));
+      items.add(Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            "Rules",
+            style: Theme.of(context).textTheme.titleMedium,
+          )));
       for (var rule in _rules) {
         items.add(RuleListItem(
             backendController: widget.backendController,
@@ -159,7 +185,12 @@ class _CategoryPageState extends State<CategoryPage> {
                 MaterialPageRoute(
                     builder: (context) => RulePage(
                           backendController: widget.backendController,
-                          ruleWithSegments: null,
+                          ruleWithSegments: RuleWithSegments(
+                              rule: Rule(
+                                  id: -1,
+                                  category: widget.category!,
+                                  priority: 0),
+                              segments: []),
                         )));
           },
           child: const Text("Add rule")));
@@ -169,12 +200,9 @@ class _CategoryPageState extends State<CategoryPage> {
       appBar: AppBar(
         title: const Text("Configure category"),
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
+      body: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 16),
         itemBuilder: (BuildContext context, int index) => items[index],
-        separatorBuilder: (BuildContext context, int index) => const SizedBox(
-          height: 16,
-        ),
         itemCount: items.length,
       ),
       floatingActionButton: FloatingActionButton(
