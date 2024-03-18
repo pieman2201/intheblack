@@ -3,6 +3,8 @@ import 'package:pfm/backend/controller.dart';
 import 'package:pfm/backend/types.dart';
 import 'package:pfm/widgets/category.dart';
 
+import '../editors/categoryeditor.dart';
+
 class ConfigurationPage extends StatefulWidget {
   final BackendController backendController;
 
@@ -38,8 +40,19 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
         setState(() {});
       },
       child: CustomScrollView(slivers: [
-        const SliverAppBar.medium(
-            flexibleSpace: FlexibleSpaceBar(
+        SliverAppBar.medium(
+          actions: [
+            IconButton(onPressed: () async {
+              await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => CategoryPage(
+                        backendController: widget.backendController, category: null,
+                      )));
+              _refreshIndicatorKey.currentState?.show();
+            }, icon: const Icon(Icons.add))
+          ],
+            flexibleSpace: const FlexibleSpaceBar(
           titlePadding: EdgeInsets.only(left: 16, bottom: 16),
           title: Text("Categories"),
         )),

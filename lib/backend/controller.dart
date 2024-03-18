@@ -94,8 +94,8 @@ class BackendController {
           accessToken, lNextCursorMap[accessToken]!);
     }
 
-    for (TransactionsDiff tDiff in tDiffs.toList().reversed) {
-      for (Transaction addedTransaction in tDiff.added.toList().reversed) {
+    for (TransactionsDiff tDiff in tDiffs) {
+      for (Transaction addedTransaction in tDiff.added) {
         await insertTransactionAndSurface(addedTransaction);
       }
       for (Transaction modifiedTransaction in tDiff.modified) {

@@ -42,11 +42,12 @@ class _SpendChartState extends State<SpendChart> {
     print(daySpendSum);
     spendLineSpots.add(const FlSpot(0, 0));
 
-    int daysToCount = DateTime.fromMillisecondsSinceEpoch(min(
-            widget.endDate.millisecondsSinceEpoch,
-            DateTime.now().millisecondsSinceEpoch))
-        .difference(widget.startDate)
-        .inDays;
+    int daysToCount;
+    if (DateTime.now().isBefore(widget.endDate)) {
+      daysToCount = DateTime.now().day - widget.startDate.day; // assume same month
+    } else {
+      daysToCount = widget.endDate.day - widget.startDate.day; // assume same month
+    }
 
     num iteratorSum = 0;
     for (var i = 1; i <= daysToCount + 1; i++) {

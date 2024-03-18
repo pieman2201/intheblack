@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pfm/backend/controller.dart';
 import 'package:pfm/backend/types.dart';
+import 'package:pfm/editors/categoryeditor.dart';
 
 import '../widgets/transaction.dart';
 
@@ -72,7 +73,7 @@ class _CategoryOverviewState extends State<CategoryOverview> {
         appBar: AppBar(
           title: Text(widget.category.name),
           bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(24),
+            preferredSize: const Size.fromHeight(48),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -95,6 +96,19 @@ class _CategoryOverviewState extends State<CategoryOverview> {
               ],
             ),
           ),
+          actions: [
+            IconButton(
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => CategoryPage(
+                                backendController: widget.backendController,
+                                category: widget.category,
+                              )));
+                },
+                icon: const Icon(Icons.edit))
+          ],
         ),
         body: RefreshIndicator(
             key: _refreshIndicatorKey,
@@ -108,12 +122,19 @@ class _CategoryOverviewState extends State<CategoryOverview> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text("Total"),
-                          Text(_transactions.isNotEmpty
-                              ? widget.formatMiscAmount(_transactions
-                                  .map((e) => e.getAmount())
-                                  .reduce((value, element) => value + element))
-                              : '')
+                          Text(
+                            "Total",
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          Text(
+                            _transactions.isNotEmpty
+                                ? widget.formatMiscAmount(_transactions
+                                    .map((e) => e.getAmount())
+                                    .reduce(
+                                        (value, element) => value + element))
+                                : '',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          )
                         ],
                       )
                     ],

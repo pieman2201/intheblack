@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:pfm/backend/controller.dart';
+import 'package:pfm/editors/budgeteditor.dart';
+import 'package:pfm/editors/rule/ruleeditor.dart';
+import 'package:pfm/widgets/budget.dart';
+import 'package:pfm/widgets/rule.dart';
 
 import '../backend/types.dart';
 
@@ -20,6 +24,26 @@ class _CategoryPageState extends State<CategoryPage> {
 
   CategoryType _categoryType = CategoryType.spending;
 
+  Budget? _budget;
+  Iterable<RuleWithSegments> _rules = [];
+
+  void _loadCategoryData() async {
+    if (widget.category == null) {
+      return;
+    }
+
+    var budgets = await widget.backendController.getBudgets();
+    _budget =
+        budgets.firstWhere((element) => element.category == widget.category);
+
+    var rules = await widget.backendController.getRulesWithSegments();
+    _rules = rules.where((element) => element.rule.category == widget.category);
+
+    if (context.mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -31,7 +55,10 @@ class _CategoryPageState extends State<CategoryPage> {
       _nameEditingController.text = widget.category!.name;
       _iconEditingController.text = widget.category!.icon.toInt().toString();
       _categoryType = widget.category!.type;
+
+      _loadCategoryData();
     }
+
   }
 
   @override
@@ -92,10 +119,51 @@ class _CategoryPageState extends State<CategoryPage> {
               child: _iconEditingController.text.isEmpty
                   ? const Icon(Icons.check_box_outline_blank)
                   : Icon(IconData(int.parse(_iconEditingController.text),
-                  fontFamily: 'MaterialIcons')))
+                      fontFamily: 'MaterialIcons')))
         ],
       ),
     ];
+
+    if (_budget != null) {
+      items.add(const Text("Budget"));
+      items.add(BudgetListItem(
+        backendController: widget.backendController,
+        budget: _budget!,
+      ));
+    } else if (widget.category != null) {
+      items.add(TextButton(
+          onPressed: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => BudgetPage(
+                          backendController: widget.backendController,
+                          budget: null,
+                        )));
+          },
+          child: const Text("Add budget")));
+    }
+
+    if (_rules.isNotEmpty) {
+      items.add(const Text("Rules"));
+      for (var rule in _rules) {
+        items.add(RuleListItem(
+            backendController: widget.backendController,
+            ruleWithSegments: rule));
+      }
+    } else if (widget.category != null) {
+      items.add(TextButton(
+          onPressed: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => RulePage(
+                          backendController: widget.backendController,
+                          ruleWithSegments: null,
+                        )));
+          },
+          child: const Text("Add rule")));
+    }
 
     return Scaffold(
       appBar: AppBar(
