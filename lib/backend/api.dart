@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:pfm/backend/types.dart';
 
+import '../util.dart';
+
 class ApiClient {
   final String clientId;
   final String secret;
@@ -10,16 +12,18 @@ class ApiClient {
   ApiClient(this.clientId, this.secret);
 
   Future<(Iterable<TransactionsDiff>, Map<String, String>)> syncTransactions(
-      Map<String, String> nextCursorMap) async {
+    Map<String, String> nextCursorMap,
+  ) async {
     List<TransactionsDiff> diffs = [];
     Map<String, String> newCursorMap = Map<String, String>.from(nextCursorMap);
     for (final accessToken in newCursorMap.keys) {
       bool hasMore = true;
       while (hasMore) {
-        Map<String, String> payload = <String, String>{
+        Map<String, dynamic> payload = <String, dynamic>{
           'client_id': clientId,
           'secret': secret,
           'access_token': accessToken,
+          'options': {'include_original_description': true},
         };
         if (newCursorMap.containsKey(accessToken) &&
             newCursorMap[accessToken] != null.toString()) {
@@ -27,10 +31,8 @@ class ApiClient {
         }
 
         http.Response resp = await http.post(
-          Uri.parse("https://development.plaid.com/transactions/sync"),
-          headers: <String, String>{
-            'Content-Type': 'application/json',
-          },
+          Uri.parse("https://production.plaid.com/transactions/sync"),
+          headers: <String, String>{'Content-Type': 'application/json'},
           body: jsonEncode(payload),
         );
 
@@ -42,9 +44,9 @@ class ApiClient {
           newCursorMap[accessToken] = tDiff.nextCursor;
           diffs.add(tDiff);
         } else {
-          print(accessToken);
-          print(resp.statusCode);
-          print(resp.body);
+          printDebug(accessToken);
+          printDebug(resp.statusCode);
+          printDebug(resp.body);
           throw Exception("Failed to sync transactions");
         }
       }

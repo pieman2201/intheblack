@@ -26,7 +26,8 @@ class DbClient {
       $transactionsColumnPrimaryCategory text not null,
       $transactionsColumnDetailedCategory text not null,
       $transactionsColumnCategoryIconUrl text not null,
-      $transactionsColumnCategory text not null)''');
+      $transactionsColumnCategory text not null,
+      $transactionsColumnOriginalDescription text)''');
 
       await db.execute('''
       create table $tableSurfacedTransactions (
@@ -41,7 +42,8 @@ class DbClient {
       $categoriesColumnId integer primary key autoincrement,
       $categoriesColumnName text not null,
       $categoriesColumnType text not null,
-      $categoriesColumnIcon int not null)''');
+      $categoriesColumnIcon int not null,
+      $categoriesColumnBudgetId integer nullable)''');
 
       await db.execute('''
       create table $tableRules (
@@ -52,7 +54,7 @@ class DbClient {
       await db.execute('''
       create table $tableBudgets (
       $budgetsColumnId integer primary key autoincrement,
-      $budgetsColumnCategoryId int not null,
+      $budgetsColumnName text not null,
       $budgetsColumnLimit real not null)''');
 
       await db.execute('''
@@ -115,6 +117,28 @@ class DbClient {
                   regex: RegExp('ACCOUNT_TRANSFER'))
               .toUnidentifiedMap());
 
+      rule = Rule(id: -1, category: category, priority: 1);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'detailed_category',
+              regex: RegExp('INVESTMENT_AND_RETIREMENT'))
+              .toUnidentifiedMap());
+
+      rule = Rule(id: -1, category: category, priority: 1);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'detailed_category',
+              regex: RegExp('CASH_ADVANCES'))
+              .toUnidentifiedMap());
+
       // Make sure Venmo bank withdrawals count as transfers
       rule = Rule(id: -1, category: category, priority: 12);
       rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
@@ -123,9 +147,51 @@ class DbClient {
           Rulesegment(id: -1, rule: rule, param: 'name', regex: RegExp('Venmo'))
               .toUnidentifiedMap());
 
+      // And same for transfers out of Venmo
+      rule = Rule(id: -1, category: category, priority: 12);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+            id: -1,
+            rule: rule,
+            param: 'category',
+            regex: RegExp('Venmo'),
+          ).toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(id: -1, rule: rule, param: 'original_description', regex: RegExp('Standard transfer'))
+              .toUnidentifiedMap());
+
+      // Invisible category that will not show up on lists in the UI
+      category = Category(
+          id: -1, name: 'Invisible', type: CategoryType.invisible, icon: 0xe6be);
+      category.id =
+      await db.insert(tableCategories, category.toUnidentifiedMap());
+
+      // Make sure authorization requests (from Future) are counted as invisible
+      rule = Rule(id: -1, category: category, priority: 12);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(id: -1, rule: rule, param: 'original_description', regex: RegExp(' - AUTHORIZATION REQUEST'))
+              .toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(id: -1, rule: rule, param: 'pending', regex: RegExp('1'))
+              .toUnidentifiedMap());
+
+      // And ignore the weird integration request holds
+      rule = Rule(id: -1, category: category, priority: 12);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(id: -1, rule: rule, param: 'original_description', regex: RegExp('Release hold ttx_'))
+              .toUnidentifiedMap());
+
       // Salary income
       category = Category(
-          id: -1, name: 'Salary', type: CategoryType.income, icon: 0xe6f2);
+          id: -1, name: 'Salary', type: CategoryType.income, icon: 0xe6f4);
       category.id =
           await db.insert(tableCategories, category.toUnidentifiedMap());
       rule = Rule(id: -1, category: category, priority: 1);
@@ -187,9 +253,9 @@ class DbClient {
                   id: -1, rule: rule, param: 'name', regex: RegExp('ALLY BANK'))
               .toUnidentifiedMap());
 
-      // Utilities living expense
+      // Electric Utilities living expense
       category = Category(
-          id: -1, name: 'Utilities', type: CategoryType.living, icon: 0xf06ed);
+          id: -1, name: 'Electricity', type: CategoryType.living, icon: 0xf06ed);
       category.id =
           await db.insert(tableCategories, category.toUnidentifiedMap());
       rule = Rule(id: -1, category: category, priority: 1);
@@ -199,8 +265,24 @@ class DbClient {
           Rulesegment(
                   id: -1,
                   rule: rule,
-                  param: 'primary_category',
-                  regex: RegExp('UTILITIES'))
+                  param: 'detailed_category',
+                  regex: RegExp('UTILITIES_GAS_AND_ELECTRICITY'))
+              .toUnidentifiedMap());
+
+      // Internet Utilities living expense
+      category = Category(
+          id: -1, name: 'Internet', type: CategoryType.living, icon: 0xe542);
+      category.id =
+      await db.insert(tableCategories, category.toUnidentifiedMap());
+      rule = Rule(id: -1, category: category, priority: 1);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'detailed_category',
+              regex: RegExp('UTILITIES_INTERNET'))
               .toUnidentifiedMap());
 
       // Ride-hailing spending
@@ -242,6 +324,18 @@ class DbClient {
                   regex: RegExp('PUBLIC_TRANSIT'))
               .toUnidentifiedMap());
 
+      // OMNY override
+      rule = Rule(id: -1, category: category, priority: 2);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'merchant_name',
+              regex: RegExp('OMNY'))
+              .toUnidentifiedMap());
+
       // Shopping spending
       category = Category(
           id: -1, name: 'Shopping', type: CategoryType.spending, icon: 0xf37d);
@@ -267,11 +361,31 @@ class DbClient {
                   param: 'detailed_category',
                   regex: RegExp('PHARMACIES'))
               .toUnidentifiedMap());
+      rule = Rule(id: -1, category: category, priority: 1);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'primary_category',
+              regex: RegExp('HOME_IMPROVEMENT'))
+              .toUnidentifiedMap());
+      rule = Rule(id: -1, category: category, priority: 1);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'primary_category',
+              regex: RegExp('PERSONAL_CARE'))
+              .toUnidentifiedMap());
 
-      // Dining & drinks spending
+      // Dining spending
       category = Category(
           id: -1,
-          name: 'Dining & drinks',
+          name: 'Dining',
           type: CategoryType.spending,
           icon: 0xf049);
       category.id =
@@ -285,6 +399,74 @@ class DbClient {
                   rule: rule,
                   param: 'primary_category',
                   regex: RegExp('FOOD_AND_DRINK'))
+              .toUnidentifiedMap());
+
+      // Drinking spending
+      category = Category(
+          id: -1,
+          name: 'Drinks',
+          type: CategoryType.spending,
+          icon: 0xe6f1);
+      category.id =
+      await db.insert(tableCategories, category.toUnidentifiedMap());
+      rule = Rule(id: -1, category: category, priority: 2);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'detailed_category',
+              regex: RegExp('BEER_WINE'))
+              .toUnidentifiedMap());
+
+      // Cafe spending
+      category = Category(
+          id: -1,
+          name: 'Cafes',
+          type: CategoryType.spending,
+          icon: 0xf175);
+      category.id =
+      await db.insert(tableCategories, category.toUnidentifiedMap());
+      rule = Rule(id: -1, category: category, priority: 2);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'detailed_category',
+              regex: RegExp('COFFEE'))
+              .toUnidentifiedMap());
+      rule = Rule(id: -1, category: category, priority: 2);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'name',
+              regex: RegExp('(c|C)(offee|OFFEE)'))
+              .toUnidentifiedMap());
+      rule = Rule(id: -1, category: category, priority: 2);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'name',
+              regex: RegExp('(c|C)(afe|AFE)'))
+              .toUnidentifiedMap());
+      rule = Rule(id: -1, category: category, priority: 2);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'merchant_name',
+              regex: RegExp('(c|C)(afe|AFE)'))
               .toUnidentifiedMap());
 
       // Groceries living expense
@@ -303,6 +485,22 @@ class DbClient {
                   regex: RegExp('GROCERIES'))
               .toUnidentifiedMap());
 
+      // Services spending
+      category = Category(
+          id: -1, name: 'Services', type: CategoryType.spending, icon: 0xe60c);
+      category.id =
+      await db.insert(tableCategories, category.toUnidentifiedMap());
+      rule = Rule(id: -1, category: category, priority: 1);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'primary_category',
+              regex: RegExp('GENERAL_SERVICES'))
+              .toUnidentifiedMap());
+
       // Fees ignored
       category = Category(
           id: -1, name: 'Fees', type: CategoryType.ignored, icon: 0xf04e);
@@ -317,6 +515,133 @@ class DbClient {
                   rule: rule,
                   param: 'primary_category',
                   regex: RegExp('BANK_FEES'))
+              .toUnidentifiedMap());
+
+      // Taxes are also fees
+      rule = Rule(id: -1, category: category, priority: 1);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'detailed_category',
+              regex: RegExp('TAX_PAYMENT'))
+              .toUnidentifiedMap());
+
+      // Entertainment spending
+      category = Category(id: -1, name: "Entertainment", type: CategoryType.spending, icon: 58964);
+      category.id =
+      await db.insert(tableCategories, category.toUnidentifiedMap());
+      rule = Rule(id: -1, category: category, priority: 1);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'primary_category',
+              regex: RegExp('ENTERTAINMENT'))
+              .toUnidentifiedMap());
+
+      // Crunch fitness living
+      category = Category(id: -1, name: "Fitness", type: CategoryType.living, icon: 57997);
+      category.id =
+      await db.insert(tableCategories, category.toUnidentifiedMap());
+      rule = Rule(id: -1, category: category, priority: 2);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'primary_category',
+              regex: RegExp('ENTERTAINMENT'))
+              .toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1, rule: rule, param: 'name', regex: RegExp('CRUNCH'))
+              .toUnidentifiedMap());
+
+      // Deposits income
+      category = Category(id: -1, name: "Deposits", type: CategoryType.income, icon: 0xf336);
+      category.id =
+      await db.insert(tableCategories, category.toUnidentifiedMap());
+      rule = Rule(id: -1, category: category, priority: 2);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'name',
+              regex: RegExp('DEPOSIT'))
+              .toUnidentifiedMap());
+      rule = Rule(id: -1, category: category, priority: 2);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'detailed_category',
+              regex: RegExp('INTEREST_EARNED'))
+              .toUnidentifiedMap());
+
+      // Withdrawals spending
+      category = Category(id: -1, name: "Withdrawals", type: CategoryType.spending, icon: 0xe3f8);
+      category.id =
+      await db.insert(tableCategories, category.toUnidentifiedMap());
+      rule = Rule(id: -1, category: category, priority: 2);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'detailed_category',
+              regex: RegExp('WITHDRAWAL'))
+              .toUnidentifiedMap());
+      rule = Rule(id: -1, category: category, priority: 2);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'name',
+              regex: RegExp('(W|w)ithdraw'))
+              .toUnidentifiedMap());
+
+      // Reimbursement income
+      category = Category(id: -1, name: "Reimbursement", type: CategoryType.income, icon: 58637);
+      category.id =
+      await db.insert(tableCategories, category.toUnidentifiedMap());
+      rule = Rule(id: -1, category: category, priority: 2);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'name',
+              regex: RegExp('BREX REIMB'))
+              .toUnidentifiedMap());
+
+      // Travel spending
+      category = Category(id: -1, name: "Travel", type: CategoryType.spending, icon: 0xeeb4);
+      category.id =
+      await db.insert(tableCategories, category.toUnidentifiedMap());
+      rule = Rule(id: -1, category: category, priority: 2);
+      rule.id = await db.insert(tableRules, rule.toUnidentifiedMap());
+      await db.insert(
+          tableRulesegments,
+          Rulesegment(
+              id: -1,
+              rule: rule,
+              param: 'detailed_category',
+              regex: RegExp('TRAVEL'))
               .toUnidentifiedMap());
     });
   }
@@ -411,6 +736,29 @@ class DbClient {
     budget.id = await db.insert(tableBudgets, budget.toUnidentifiedMap());
     return budget;
   }
+  
+  // Helper method to associate categories with a budget
+  Future<void> associateCategoriesWithBudget(int budgetId, List<int> categoryIds) async {
+    // Update categories to reference this budget
+    for (var categoryId in categoryIds) {
+      await db.update(
+        tableCategories,
+        {categoriesColumnBudgetId: budgetId},
+        where: '$categoriesColumnId = ?', 
+        whereArgs: [categoryId]
+      );
+    }
+  }
+  
+  // Helper method to remove budget associations from categories
+  Future<void> removeBudgetFromCategories(int budgetId) async {
+    await db.update(
+      tableCategories,
+      {categoriesColumnBudgetId: null},
+      where: '$categoriesColumnBudgetId = ?', 
+      whereArgs: [budgetId]
+    );
+  }
 
   Future<Budget> updateBudget(Budget budget) async {
     await db.update(tableBudgets, budget.toMap(),
@@ -419,37 +767,55 @@ class DbClient {
   }
 
   Future<Budget> deleteBudget(Budget budget) async {
+    // First remove budget associations from all categories
+    await removeBudgetFromCategories(budget.id);
+    
+    // Then delete the budget
     await db.delete(tableBudgets,
         where: '$budgetsColumnId = ?', whereArgs: [budget.id]);
     return budget;
   }
 
   Future<Budget?> getBudgetById(int budgetId) async {
-    List<Map<String, dynamic>> maps = await db.rawQuery('''
-    select * from $tableBudgets
-    left join $tableCategories
-    on $tableBudgets.$budgetsColumnCategoryId=$tableCategories.$categoriesColumnId
-    where $budgetsColumnId = $budgetId
-    ''');
+    List<Map<String, dynamic>> maps = await db.query(
+      tableBudgets,
+      where: '$budgetsColumnId = ?',
+      whereArgs: [budgetId]
+    );
+    
     if (maps.isNotEmpty) {
-      return Budget(
-          id: maps.first[budgetsColumnId],
-          category: Category.fromMap(maps.first),
-          limit: maps.first[budgetsColumnLimit]);
+      var budget = Budget.fromMap(maps.first);
+      // Load associated categories
+      budget.categories = (await getCategoriesByBudgetId(budgetId)).toList();
+      return budget;
     }
     return null;
   }
 
   Future<Iterable<Budget>> getBudgets() async {
-    List<Map<String, dynamic>> maps = await db.rawQuery('''
-    select * from $tableBudgets
-    left join $tableCategories
-    on $tableBudgets.$budgetsColumnCategoryId=$tableCategories.$categoriesColumnId
-    ''');
-    return maps.map((e) => Budget(
-        id: e[budgetsColumnId],
-        category: Category.fromMap(e),
-        limit: e[budgetsColumnLimit]));
+    List<Map<String, dynamic>> maps = await db.query(tableBudgets);
+    
+    // Create budgets without loading categories yet
+    List<Budget> budgets = maps.map((e) => Budget.fromMap(e)).toList();
+
+    List<Budget> budgetsWithCategories = [];
+    // Load categories for each budget
+    for (var budget in budgets) {
+      budget.categories = (await getCategoriesByBudgetId(budget.id)).toList();
+      budgetsWithCategories.add(budget);
+    }
+    
+    return budgetsWithCategories;
+  }
+  
+  // New method to get categories by budget ID
+  Future<Iterable<Category>> getCategoriesByBudgetId(int budgetId) async {
+    List<Map<String, dynamic>> maps = await db.query(
+      tableCategories,
+      where: '$categoriesColumnBudgetId = ?',
+      whereArgs: [budgetId]
+    );
+    return maps.map((e) => Category.fromMap(e));
   }
 
   Future<Rule> insertRule(Rule rule) async {

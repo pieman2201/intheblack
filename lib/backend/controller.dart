@@ -1,6 +1,7 @@
 import 'package:pfm/backend/api.dart';
 import 'package:pfm/backend/db.dart';
 import 'package:pfm/backend/types.dart';
+import 'package:pfm/util.dart';
 
 import 'categorize.dart';
 
@@ -111,7 +112,7 @@ class BackendController {
       for (String removedTransactionId in tDiff.removed) {
         Transaction? originalTransaction =
             await dbClient.getTransactionByTransactionId(removedTransactionId);
-        print(originalTransaction);
+        printDebug(originalTransaction);
         if (originalTransaction != null) {
           // Remove surfaced transaction associated with the transaction
           Iterable<SurfacedTransaction> surfacedTransactions = await dbClient
@@ -135,6 +136,7 @@ class BackendController {
         matchingSurfacedTransactions.toList();
     surfacedTransactionList.sort(
         (b, a) => a.realTransaction.date.compareTo(b.realTransaction.date));
+    surfacedTransactionList.removeWhere((e) => e.category.type == CategoryType.invisible);
     return surfacedTransactionList;
   }
 
@@ -180,14 +182,26 @@ class BackendController {
   }
 
   Future<Category> upsertCategory(Category category) async {
-    Category? existingBudget = await dbClient.getCategoryById(category.id);
-    if (existingBudget == null) {
+    Category? existingCategory = await dbClient.getCategoryById(category.id);
+    if (existingCategory == null) {
       // Insert
       return await dbClient.insertCategory(category);
     } else {
       // Update
       return await dbClient.updateCategory(category);
     }
+  }
+  
+  // Associate a category with a budget
+  Future<Category> assignCategoryToBudget(Category category, Budget? budget) async {
+    // Update category with budget reference
+    category.budgetId = budget?.id;
+    return await upsertCategory(category);
+  }
+  
+  // Get categories assigned to a specific budget
+  Future<List<Category>> getCategoriesForBudget(Budget budget) async {
+    return (await dbClient.getCategoriesByBudgetId(budget.id)).toList();
   }
 
   Future<Iterable<Category>> getCategories() async {
@@ -212,22 +226,42 @@ class BackendController {
     await dbClient.deleteCategory(category);
   }
 
-  Future<Budget> upsertBudget(Budget budget) async {
+  Future<Budget> upsertBudget(Budget budget, List<Category> categories) async {
     Budget? existingBudget = await dbClient.getBudgetById(budget.id);
+    Budget savedBudget;
+    
     if (existingBudget == null) {
-      // Insert
-      return await dbClient.insertBudget(budget);
+      // Insert new budget
+      savedBudget = await dbClient.insertBudget(budget);
     } else {
-      // Update
-      return await dbClient.updateBudget(budget);
+      // Update existing budget
+      savedBudget = await dbClient.updateBudget(budget);
+      
+      // Remove old category associations
+      await dbClient.removeBudgetFromCategories(budget.id);
     }
+    
+    // Associate selected categories with this budget
+    List<int> categoryIds = categories.map((c) => c.id).toList();
+    await dbClient.associateCategoriesWithBudget(savedBudget.id, categoryIds);
+    
+    // Update cached categories in budget
+    savedBudget.categories = categories;
+    
+    return savedBudget;
   }
 
+  // Get all budgets with their categories populated
   Future<Iterable<Budget>> getBudgets() async {
-    return await dbClient.getBudgets();
+    printDebug("GETTING BUDGETS");
+    Iterable<Budget> budgets = await dbClient.getBudgets();
+    printDebug("BUDGETS: ");
+    printDebug(budgets);
+    return budgets;
   }
 
   Future deleteBudget(Budget budget) async {
+    // This will automatically remove budget references from categories
     await dbClient.deleteBudget(budget);
   }
 

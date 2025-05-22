@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:pfm/backend/controller.dart';
 import 'package:pfm/backend/types.dart';
 import 'package:pfm/editors/categoryeditor.dart';
+import 'package:pfm/util.dart';
 
 import '../widgets/transaction.dart';
 
@@ -39,14 +40,14 @@ class _CategoryOverviewState extends State<CategoryOverview> {
     setState(() {});
     var (monthStart, monthEnd) = widget.backendController.getMonthBounds(
         widget.backendController.getNthPreviousMonth(_nthPreviousMonth));
-    print(monthStart);
-    print(monthEnd);
+    printDebug(monthStart);
+    printDebug(monthEnd);
     _transactions = (await widget.backendController
             .getSurfacedTransactionsInCategoryInDateRange(
                 widget.category, monthStart, monthEnd))
         .toList();
     for (SurfacedTransaction transaction in _transactions) {
-      print(transaction.realTransaction.date);
+      printDebug(transaction.realTransaction.date);
     }
     _transactions.sort((b, a) {
       return a.realTransaction.date.compareTo(b.realTransaction.date);

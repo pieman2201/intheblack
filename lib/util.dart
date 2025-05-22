@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'backend/types.dart';
 
 Map<CategoryType, String Function(num amount)> categoryTypeAmountFormatters = {
@@ -25,11 +27,17 @@ Map<CategoryType, String Function(num amount)> categoryTypeAmountFormatters = {
       return '+\$${amount.abs().toStringAsFixed(0)}';
     }
     return '\$${amount.toStringAsFixed(0)}';
-  }
+  },
+  CategoryType.invisible: (num amount) {
+    if (amount < 0) {
+      return '+\$${amount.abs().toStringAsFixed(0)}';
+    }
+    return '\$${amount.toStringAsFixed(0)}';
+  },
 };
 
 Map<CategoryType, String Function(num amount)>
-    categoryTypeRemainingAmountFormatters = {
+categoryTypeRemainingAmountFormatters = {
   CategoryType.spending: (num amount) {
     if (amount < 0) {
       return '\$${amount.abs().toStringAsFixed(0)} over';
@@ -53,11 +61,17 @@ Map<CategoryType, String Function(num amount)>
       return '+\$${amount.abs().toStringAsFixed(0)}';
     }
     return '\$${amount.toStringAsFixed(0)}';
-  }
+  },
+  CategoryType.invisible: (num amount) {
+    if (amount < 0) {
+      return '+\$${amount.abs().toStringAsFixed(0)}';
+    }
+    return '\$${amount.toStringAsFixed(0)}';
+  },
 };
 
 Map<CategoryType, String Function(num amount)>
-    categoryTypeMiscAmountFormatters = {
+categoryTypeMiscAmountFormatters = {
   CategoryType.spending: (num amount) {
     if (amount < 0) {
       return '+\$${amount.abs().toStringAsFixed(2)}';
@@ -81,5 +95,17 @@ Map<CategoryType, String Function(num amount)>
       return '+\$${amount.abs().toStringAsFixed(2)}';
     }
     return '\$${amount.toStringAsFixed(2)}';
-  }
+  },
+  CategoryType.invisible: (num amount) {
+    if (amount < 0) {
+      return '+\$${amount.abs().toStringAsFixed(2)}';
+    }
+    return '\$${amount.toStringAsFixed(2)}';
+  },
 };
+
+void printDebug(Object? o) {
+  if (kDebugMode) {
+    print(o);
+  }
+}

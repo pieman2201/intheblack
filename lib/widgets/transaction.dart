@@ -4,6 +4,8 @@ import 'package:pfm/backend/types.dart';
 import 'package:intl/intl.dart';
 import 'package:pfm/editors/transactioneditor.dart';
 
+import '../util.dart';
+
 class TransactionListItem extends StatefulWidget {
   final BackendController backendController;
   final SurfacedTransaction transaction;
@@ -43,9 +45,7 @@ class _TransactionListItemState extends State<TransactionListItem> {
         ),
         subtitle:
             Text(DateFormat('MMMMd').format(_transaction.realTransaction.date)),
-        trailing: Text(_transaction.getAmount().isNegative
-            ? '+\$${_transaction.getAmount().abs().toStringAsFixed(2)}'
-            : '\$${_transaction.getAmount().abs().toStringAsFixed(2)}'),
+        trailing: Text(categoryTypeMiscAmountFormatters[_transaction.category.type]!(_transaction.getAmount())),
         onTap: () async {
           SurfacedTransaction? newTransaction = await Navigator.push(
               context,

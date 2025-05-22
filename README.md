@@ -1,6 +1,6 @@
 # pfm
 
-Transaction viewer
+pfm app
 
 ## Getting Started
 

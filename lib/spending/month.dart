@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pfm/backend/controller.dart';
+import 'package:pfm/util.dart';
 import 'package:pfm/widgets/spendcard/spendcard.dart';
 import 'package:pfm/widgets/spendchart.dart';
 
@@ -32,8 +33,8 @@ class _MonthSpendingPageState extends State<MonthSpendingPage> {
     try {
       await widget.backendController.syncTransactionsAndStore();
     } on Exception catch (e, s) {
-      print(e);
-      print(s);
+      printDebug(e);
+      printDebug(s);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Could not sync transactions")));
@@ -46,6 +47,7 @@ class _MonthSpendingPageState extends State<MonthSpendingPage> {
   Future _retrieveStoredData() async {
     _transactions = [];
     _beginningOfCurrentMonth = null;
+    _budgets = [];
     if (!mounted) return;
     setState(() {});
 
@@ -54,11 +56,11 @@ class _MonthSpendingPageState extends State<MonthSpendingPage> {
         .getNthPreviousMonth(widget.nthPreviousMonthToShow));
     _beginningOfCurrentMonth = monthStart;
     _endOfCurrentMonth = monthEnd;
+    _budgets = await widget.backendController.getBudgets();
     _transactions = await widget.backendController
         .getSurfacedTransactionsInDateRange(
             _beginningOfCurrentMonth!, _endOfCurrentMonth!);
 
-    _budgets = await widget.backendController.getBudgets();
 
     if (!mounted) return;
     setState(() {});
@@ -66,12 +68,13 @@ class _MonthSpendingPageState extends State<MonthSpendingPage> {
 
   @override
   void initState() {
-    super.initState();
-
     // Trigger first-time 'refresh'
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _refreshIndicatorKey.currentState?.show();
     });
+
+    printDebug("init month state");
+    super.initState();
   }
 
   @override

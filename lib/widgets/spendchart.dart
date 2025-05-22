@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:pfm/util.dart';
 
 import '../backend/types.dart';
 
@@ -39,7 +40,7 @@ class _SpendChartState extends State<SpendChart> {
                 transaction.getAmount();
       }
     }
-    print(daySpendSum);
+    printDebug(daySpendSum);
     spendLineSpots.add(const FlSpot(0, 0));
 
     int daysToCount;
@@ -66,9 +67,9 @@ class _SpendChartState extends State<SpendChart> {
             iteratorSum.toDouble() +
                 (dailySpendRate * (widget.endDate.day - maxDate.day))),
       ]);
-      print(projectedLineSpots);
+      printDebug(projectedLineSpots);
     }
-    print(spendLineSpots);
+    printDebug(spendLineSpots);
 
     return AspectRatio(
         aspectRatio: 3,
@@ -99,18 +100,18 @@ class _SpendChartState extends State<SpendChart> {
                         isStrokeJoinRound: true,
                         isStrokeCapRound: true,
                         barWidth: 4,
-                        color: Theme.of(context).colorScheme.primary,
+                        color: Theme.of(context).colorScheme.primaryContainer,
                         belowBarData: BarAreaData(
                             show: true,
                             gradient: LinearGradient(
                               colors: [
                                 Theme.of(context)
                                     .colorScheme
-                                    .primary
+                                    .primaryContainer
                                     .withOpacity(0.5),
                                 Theme.of(context)
                                     .colorScheme
-                                    .primary
+                                    .primaryContainer
                                     .withOpacity(0.0)
                               ],
                               begin: Alignment.topCenter,
@@ -121,7 +122,7 @@ class _SpendChartState extends State<SpendChart> {
                       spots: projectedLineSpots,
                       isStrokeCapRound: true,
                       barWidth: 4,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: Theme.of(context).colorScheme.primaryContainer,
                       dotData: const FlDotData(show: false),
                       dashArray: [2, 6],
                     )

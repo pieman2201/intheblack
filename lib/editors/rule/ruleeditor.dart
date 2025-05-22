@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:pfm/backend/controller.dart';
 
 import '../../backend/types.dart';
+import '../../util.dart';
 import './segmenteditor.dart';
 
 class RulePage extends StatefulWidget {
@@ -98,7 +99,7 @@ class _RulePageState extends State<RulePage> {
                       wList.add(SegmentEditorItem(
                         segment: _segments[index],
                         onEditedCallback: (String param, RegExp regex) {
-                          print(index);
+                          printDebug(index);
                           _segments[index].param = param;
                           _segments[index].regex = regex;
                         },
@@ -123,8 +124,8 @@ class _RulePageState extends State<RulePage> {
         onPressed: () async {
           RuleWithSegments ruleWithSegments =
               RuleWithSegments(rule: _rule, segments: _segments);
-          print(_rule.category.name);
-          print(_segments.map((e) => '${e.param} ${e.regex.pattern}').toList().toString());
+          printDebug(_rule.category.name);
+          printDebug(_segments.map((e) => '${e.param} ${e.regex.pattern}').toList().toString());
           await widget.backendController
               .upsertRuleWithSegments(ruleWithSegments);
           if (context.mounted) {

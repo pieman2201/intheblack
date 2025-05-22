@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:flutter/material.dart';
 import 'package:pfm/backend/controller.dart';
 import 'package:pfm/configuration/page.dart';
 import 'package:pfm/settings/page.dart';
@@ -20,8 +20,8 @@ class DestinationPage {
 
 class BackendDestinationPage extends DestinationPage {
   BackendDestinationPage({required Widget page, required super.navigationIcon})
-      : super(
-            page: FutureBuilder(
+    : super(
+        page: FutureBuilder(
           future: () async {
             await _backendController.open();
             return 0;
@@ -33,7 +33,8 @@ class BackendDestinationPage extends DestinationPage {
             }
             return const SizedBox.shrink();
           },
-        ));
+        ),
+      );
 }
 
 class MyApp extends StatelessWidget {
@@ -42,41 +43,74 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return DynamicColorBuilder(builder: (lightTheme, darkTheme) {
-      return MaterialApp(
-        title: 'Budgeting',
-        theme: ThemeData(
-            colorScheme:
-                lightTheme ?? ColorScheme.fromSeed(seedColor: Colors.white)),
-        darkTheme: ThemeData(
-          colorScheme:
-              darkTheme ?? ColorScheme.fromSeed(seedColor: Colors.white),
-          useMaterial3: true,
-        ),
-        home: BottomNavigationPage(destinationPages: [
-          BackendDestinationPage(
-            page: SpendingPage(backendController: _backendController),
-            navigationIcon: const NavigationDestination(
-                icon: Icon(Icons.local_atm), label: 'Spending'),
+    const cardThemeData = CardThemeData(
+      elevation: 0,
+    );
+
+    return DynamicColorBuilder(
+      builder: (lightTheme, darkTheme) {
+        return MaterialApp(
+          title: 'Budgeting',
+          theme: ThemeData(
+            useSystemColors: true,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: (lightTheme != null) ? lightTheme.primary : Colors.white,
+              brightness: Brightness.light,
+              dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
+            ),
+            brightness: Brightness.light,
+            useMaterial3: true,
+
+            cardTheme: cardThemeData,
           ),
-          BackendDestinationPage(
-              page: ConfigurationPage(
-                backendController: _backendController,
+          darkTheme: ThemeData(
+            useSystemColors: true,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: (darkTheme != null) ? darkTheme.primary :Colors.white,
+              brightness: Brightness.dark,
+              dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
+            ),
+            brightness: Brightness.dark,
+            useMaterial3: true,
+
+            cardTheme: cardThemeData,
+          ),
+
+          home: BottomNavigationPage(
+            destinationPages: [
+              BackendDestinationPage(
+                page: SpendingPage(backendController: _backendController),
+                navigationIcon: const NavigationDestination(
+                  icon: Icon(Icons.local_atm),
+                  label: 'Spending',
+                ),
               ),
-              navigationIcon: const NavigationDestination(
-                  icon: Icon(Icons.filter_list), label: "Categories")),
-          DestinationPage(
-              page: Container(),
-              navigationIcon: const NavigationDestination(
-                  icon: Icon(Icons.search), label: 'Transactions')),
-          BackendDestinationPage(
-            page: SettingsPage(backendController: _backendController),
-            navigationIcon: const NavigationDestination(
-                icon: Icon(Icons.settings), label: 'Settings'),
-          )
-        ]),
-      );
-    });
+              BackendDestinationPage(
+                page: ConfigurationPage(backendController: _backendController),
+                navigationIcon: const NavigationDestination(
+                  icon: Icon(Icons.filter_list),
+                  label: "Categories",
+                ),
+              ),
+              DestinationPage(
+                page: Container(),
+                navigationIcon: const NavigationDestination(
+                  icon: Icon(Icons.search),
+                  label: 'Transactions',
+                ),
+              ),
+              BackendDestinationPage(
+                page: SettingsPage(backendController: _backendController),
+                navigationIcon: const NavigationDestination(
+                  icon: Icon(Icons.settings),
+                  label: 'Settings',
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -108,8 +142,9 @@ class _BottomNavigationPageState extends State<BottomNavigationPage> {
             _selectedIndex = index;
           });
         },
-        destinations:
-            widget.destinationPages.map((e) => e.navigationIcon).toList(),
+        destinations: widget.destinationPages
+            .map((e) => e.navigationIcon)
+            .toList(),
       ),
     );
   }

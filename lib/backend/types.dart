@@ -1,3 +1,6 @@
+import '../util.dart';
+import 'db.dart';
+
 const String tableTransactions = 'transactions';
 const String transactionsColumnId = 'transactions_id';
 const String transactionsColumnAmount = 'transactions_amount';
@@ -17,6 +20,7 @@ const String transactionsColumnDetailedCategory =
 const String transactionsColumnCategoryIconUrl =
     'transactions_category_icon_url';
 const String transactionsColumnCategory = 'transactions_category';
+const String transactionsColumnOriginalDescription = 'transactions_original_description';
 
 class Transaction {
   int id;
@@ -33,6 +37,7 @@ class Transaction {
   String detailedCategory;
   String categoryIconUrl;
   String category;
+  String? originalDescription;
 
   static num dateToNum(DateTime date) {
     return date.year * 10000 + date.month * 100 + date.day;
@@ -62,6 +67,7 @@ class Transaction {
       transactionsColumnDetailedCategory: detailedCategory,
       transactionsColumnCategoryIconUrl: categoryIconUrl,
       transactionsColumnCategory: category,
+      transactionsColumnOriginalDescription: originalDescription,
     };
     return map;
   }
@@ -87,6 +93,7 @@ class Transaction {
     required this.detailedCategory,
     required this.categoryIconUrl,
     required this.category,
+    required this.originalDescription,
   });
 
   Transaction.fromMap(Map<String, dynamic> map)
@@ -105,7 +112,8 @@ class Transaction {
         primaryCategory = map[transactionsColumnPrimaryCategory]!,
         detailedCategory = map[transactionsColumnDetailedCategory]!,
         categoryIconUrl = map[transactionsColumnCategoryIconUrl]!,
-        category = map[transactionsColumnCategory].toString();
+        category = map[transactionsColumnCategory].toString(),
+        originalDescription = map[transactionsColumnOriginalDescription];
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
     return switch (json) {
@@ -125,6 +133,7 @@ class Transaction {
         },
         'personal_finance_category_icon_url': String categoryIconUrl,
         'category': dynamic category,
+        'original_description': String? originalDescription,
       } =>
         () {
           Transaction t = Transaction(
@@ -143,6 +152,7 @@ class Transaction {
             logoUrl: logoUrl,
             merchantName: merchantName,
             category: category.toString(),
+            originalDescription: originalDescription,
           );
           if (logoUrl == null || merchantName == null) {
             // Attempt to source from counterparty if missing in main body
@@ -159,7 +169,7 @@ class Transaction {
           return t;
         }(),
       _ => () {
-          print(json);
+          printDebug(json);
           throw const FormatException("Failed to load Transaction");
         }(),
     };
@@ -171,12 +181,14 @@ const String categoriesColumnId = 'categories_id';
 const String categoriesColumnName = 'categories_name';
 const String categoriesColumnType = 'categories_type';
 const String categoriesColumnIcon = 'categories_icon';
+const String categoriesColumnBudgetId = 'categories_budget_id';
 
 enum CategoryType {
   spending,
   living,
   income,
   ignored,
+  invisible,
 }
 
 class Category {
@@ -184,6 +196,7 @@ class Category {
   String name;
   CategoryType type;
   int icon;
+  int? budgetId; // Optional reference to a budget
 
   @override
   bool operator ==(Object other) =>
@@ -198,6 +211,7 @@ class Category {
       categoriesColumnName: name,
       categoriesColumnType: type.toString(),
       categoriesColumnIcon: icon,
+      categoriesColumnBudgetId: budgetId,
     };
     return map;
   }
@@ -213,6 +227,7 @@ class Category {
     required this.name,
     required this.type,
     required this.icon,
+    this.budgetId,
   });
 
   Category.fromMap(Map<String, dynamic> map)
@@ -220,7 +235,8 @@ class Category {
         name = map[categoriesColumnName],
         type = CategoryType.values
             .firstWhere((e) => e.toString() == map[categoriesColumnType]),
-        icon = map[categoriesColumnIcon];
+        icon = map[categoriesColumnIcon],
+        budgetId = map[categoriesColumnBudgetId];
 }
 
 const String tableRules = 'rules';
@@ -300,7 +316,7 @@ class RuleWithSegments {
   bool matchesTransaction(Transaction transaction) {
     Map<String, dynamic> transactionMap = transaction.toMap();
     for (var segment in segments) {
-      String paramValue = transactionMap['transactions_${segment.param}'];
+      String paramValue = transactionMap['transactions_${segment.param}'].toString();
       if (!segment.regex.hasMatch(paramValue)) {
         return false;
       }
@@ -312,13 +328,22 @@ class RuleWithSegments {
 
 const String tableBudgets = 'budgets';
 const String budgetsColumnId = 'budgets_id';
-const String budgetsColumnCategoryId = 'budgets_category_id';
 const String budgetsColumnLimit = 'budgets_limit';
+const String budgetsColumnName = 'budgets_name';
 
 class Budget {
   int id;
-  Category category;
+  String name;
   num limit;
+  List<Category>? _categories; // Cached list of categories using this budget
+  
+  // Getter for categories
+  List<Category> get categories => _categories ?? [];
+  
+  // Setter for categories
+  set categories(List<Category>? value) {
+    _categories = value;
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -326,20 +351,29 @@ class Budget {
 
   @override
   int get hashCode => id.hashCode;
-
-  num get effectiveLimit {
-    if (category.type == CategoryType.income) {
-      return -limit;
+  
+  // Calculate effective limit based on category types in this budget
+  // This no longer requires a DB lookup
+  num getEffectiveLimit() {
+    if (_categories == null || _categories!.isEmpty) return limit;
+    
+    // If any category is income type, use negative limit (income budget)
+    for (var category in _categories!) {
+      if (category.type == CategoryType.income) {
+        return -limit;
+      }
     }
     return limit;
   }
 
-  Budget({required this.id, required this.category, required this.limit});
+  Budget({required this.id, required this.name, required this.limit, List<Category>? categories}) {
+    _categories = categories;
+  }
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       budgetsColumnId: id,
-      budgetsColumnCategoryId: category.id,
+      budgetsColumnName: name,
       budgetsColumnLimit: limit,
     };
   }
@@ -349,6 +383,12 @@ class Budget {
     map.remove(budgetsColumnId);
     return map;
   }
+  
+  // Create a Budget from a map, without populating the categories
+  Budget.fromMap(Map<String, dynamic> map)
+      : id = map[budgetsColumnId],
+        name = map[budgetsColumnName],
+        limit = map[budgetsColumnLimit];
 }
 
 const String tableSurfacedTransactions = 'surfaced_transactions';
