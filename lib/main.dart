@@ -4,6 +4,7 @@ import 'package:pfm/backend/controller.dart';
 import 'package:pfm/configuration/page.dart';
 import 'package:pfm/settings/page.dart';
 import 'package:pfm/spending/page.dart';
+import 'package:pfm/transactions/page.dart';
 
 final BackendController _backendController = BackendController();
 
@@ -92,8 +93,8 @@ class MyApp extends StatelessWidget {
                   label: "Categories",
                 ),
               ),
-              DestinationPage(
-                page: Container(),
+              BackendDestinationPage(
+                page: TransactionsPage(backendController: _backendController),
                 navigationIcon: const NavigationDestination(
                   icon: Icon(Icons.search),
                   label: 'Transactions',

@@ -146,6 +146,7 @@ class _CategoryOverviewState extends State<CategoryOverview> {
                 itemCount: _transactions.length,
                 itemBuilder: (BuildContext context, int index) {
                   return TransactionListItem(
+                    key: UniqueKey(),
                     backendController: widget.backendController,
                     transaction:
                         _transactions[_transactions.length - index - 1],
